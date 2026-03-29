@@ -8,11 +8,16 @@
     --muted: #6b7280;
     --border: #ece7df;
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.06);
     --radius: 20px;
 }
 
 * {
     box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
@@ -21,6 +26,10 @@ body {
     color: var(--text);
     margin: 0;
     padding: 0;
+}
+
+h1, h2, h3, h4, h5 {
+    letter-spacing: -0.5px;
 }
 
 a {
@@ -99,10 +108,13 @@ a {
     border-radius: 14px;
     padding: 13px 24px;
     font-weight: 800;
+    box-shadow: 0 6px 18px rgba(122, 15, 29, 0.3);
+    transition: 0.25s ease;
 }
 
 .btn-main:hover {
     color: #fff;
+    transform: translateY(-2px);
 }
 
 .btn-outline-main {
@@ -112,11 +124,13 @@ a {
     padding: 11px 22px;
     font-weight: 800;
     background: transparent;
+    transition: 0.25s ease;
 }
 
 .btn-outline-main:hover {
     background: var(--primary);
     color: #fff;
+    transform: translateY(-2px);
 }
 
 .hero-card,
@@ -261,7 +275,9 @@ a {
 }
 
 .dashboard-body {
-    background: #f4f6fa;
+    background:
+        radial-gradient(circle at top right, rgba(122, 15, 29, 0.04), transparent 28%),
+        linear-gradient(180deg, #f6f7fb 0%, #f3f5fa 100%);
 }
 
 .dashboard-layout {
@@ -278,6 +294,7 @@ a {
     top: 0;
     height: 100vh;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(8px);
 }
 
 .sidebar-brand {
@@ -287,6 +304,8 @@ a {
     font-size: 1.35rem;
     font-weight: 800;
     margin-bottom: 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 14px;
 }
 
 .sidebar-user {
@@ -324,13 +343,24 @@ a {
     color: #fff;
     padding: 13px 14px;
     border-radius: 14px;
-    transition: 0.25s ease;
     font-weight: 700;
+    transition: 0.25s ease;
 }
 
 .sidebar-link:hover {
     color: #fff;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateX(-4px);
+}
+
+.sidebar-link.active {
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+    transform: translateX(-4px);
+}
+
+.sidebar-link.active i {
+    color: #fff;
 }
 
 .sidebar-link.disabled {
@@ -346,10 +376,16 @@ a {
 .dashboard-main {
     flex: 1;
     padding: 28px;
+    animation: fadeIn 0.4s ease;
 }
 
 .dashboard-topbar {
     margin-bottom: 24px;
+    background: #fff;
+    padding: 18px 22px;
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
 }
 
 .dashboard-page-title {
@@ -379,6 +415,12 @@ a {
     display: flex;
     align-items: center;
     gap: 16px;
+    transition: 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
 }
 
 .stat-card-icon {
@@ -391,6 +433,7 @@ a {
     align-items: center;
     justify-content: center;
     font-size: 1.4rem;
+    flex-shrink: 0;
 }
 
 .stat-card-body h5 {
@@ -408,7 +451,7 @@ a {
     background: #fff;
     border-radius: 22px;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-soft);
     overflow: hidden;
     height: 100%;
 }
@@ -443,10 +486,13 @@ a {
     color: var(--text);
     font-weight: 700;
     border: 1px solid var(--border);
+    transition: 0.25s ease;
 }
 
 .quick-action-btn:hover {
     color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
 }
 
 .styled-form p {
@@ -469,6 +515,7 @@ a {
     padding: 10px 14px;
     margin-bottom: 8px;
     background: #fff;
+    transition: 0.2s ease;
 }
 
 .styled-form input:focus,
@@ -678,6 +725,17 @@ a {
     border-top: 4px solid #0d6efd;
 }
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (max-width: 1200px) {
     .stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -693,6 +751,10 @@ a {
         width: 100%;
         height: auto;
         position: relative;
+    }
+
+    .dashboard-main {
+        padding: 18px;
     }
 }
 
@@ -715,5 +777,13 @@ a {
 
     .alerts-grid {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-page-title {
+        font-size: 1.55rem;
+    }
+
+    .sidebar-brand {
+        font-size: 1.15rem;
     }
 }
