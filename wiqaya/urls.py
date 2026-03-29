@@ -5,14 +5,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-
     path("", include("core.urls")),
-    path("contracts/", include("contracts.urls")),
-    path("certificates/", include("certificates.urls")),
-    path("visits/", include("visits.urls")),
-
-    # ✅ إضافة عروض الأسعار
-    path("quotations/", include("quotations.urls")),
 ]
 
 if settings.DEBUG:
