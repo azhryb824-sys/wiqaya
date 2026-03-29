@@ -1,0 +1,148 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}تفاصيل عرض السعر | منصة وقاية{% endblock %}
+{% block page_title %}تفاصيل عرض السعر{% endblock %}
+{% block page_subtitle %}عرض شامل لجميع بيانات عرض السعر والبنود والدفعات{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card mb-4">
+    <div class="panel-card-body">
+        <div class="top-actions mb-4">
+            <a href="{% url 'quotation_print' quotation.id %}" class="btn btn-main">طباعة العرض</a>
+
+            {% if request.user.user_type == "client" and quotation.status == "sent" or request.user.user_type == "client" and quotation.status == "draft" %}
+            <a href="{% url 'quotation_client_decision' quotation.id %}" class="btn btn-outline-success">قبول / رفض</a>
+            {% endif %}
+
+            {% if request.user.user_type == "client" and quotation.status == "accepted" and not quotation.payment_method %}
+            <a href="{% url 'quotation_payment_choice' quotation.id %}" class="btn btn-outline-warning">اختيار طريقة الدفع</a>
+            {% endif %}
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item"><strong>رقم عرض السعر:</strong> {{ quotation.quotation_number }}</div>
+            <div class="detail-item"><strong>الحالة:</strong> {{ quotation.get_status_display }}</div>
+            <div class="detail-item"><strong>مؤسسة العميل:</strong> {{ quotation.client_display_name }}</div>
+            <div class="detail-item"><strong>اسم المبنى:</strong> {{ quotation.building_name }}</div>
+            <div class="detail-item full"><strong>موقع المبنى:</strong> {{ quotation.building_location }}</div>
+            <div class="detail-item"><strong>المجموع:</strong> {{ quotation.subtotal }} ريال</div>
+            <div class="detail-item"><strong>الضريبة 15%:</strong> {{ quotation.vat_amount }} ريال</div>
+            <div class="detail-item"><strong>الإجمالي:</strong> {{ quotation.grand_total }} ريال</div>
+            <div class="detail-item"><strong>طريقة الدفع المختارة:</strong> {{ quotation.get_payment_method_display|default:"-" }}</div>
+            <div class="detail-item full"><strong>المبلغ كتابة:</strong> {{ quotation.grand_total_words|default:"-" }}</div>
+            <div class="detail-item full"><strong>طريقة الدفع / الدفعات:</strong><br>{{ quotation.payment_terms|linebreaksbr }}</div>
+            <div class="detail-item"><strong>مدة التنفيذ:</strong> {{ quotation.execution_period }}</div>
+            <div class="detail-item"><strong>رقم حساب المؤسسة:</strong> {{ quotation.institution_account_number }}</div>
+            <div class="detail-item full"><strong>ملاحظة العميل:</strong> {{ quotation.client_decision_note|default:"-" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card mb-4">
+    <div class="panel-card-body">
+        <h4 class="section-title">بنود عرض السعر</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>الإيضاحات</th>
+                        <th>الكمية</th>
+                        <th>السعر الفرادي</th>
+                        <th>السعر الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in quotation.items.all %}
+                    <tr>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price }}</td>
+                        <td>{{ item.total_price }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">لا توجد بنود</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card">
+    <div class="panel-card-body">
+        <h4 class="section-title">الدفعات</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>اسم الدفعة</th>
+                        <th>النسبة</th>
+                        <th>المبلغ</th>
+                        <th>موعد الدفع</th>
+                        <th>تم السداد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for installment in quotation.installments.all %}
+                    <tr>
+                        <td>{{ installment.title }}</td>
+                        <td>{{ installment.percentage }}%</td>
+                        <td>{{ installment.amount|default:"-" }}</td>
+                        <td>{{ installment.due_description }}</td>
+                        <td>{% if installment.is_paid %}نعم{% else %}لا{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">لا توجد دفعات محددة</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.top-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.detail-item {
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+    line-height: 1.8;
+}
+
+.detail-item.full {
+    grid-column: 1 / -1;
+}
+
+.section-title {
+    color: #7a0f1d;
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 767px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-item.full {
+        grid-column: auto;
+    }
+}
+</style>
+{% endblock %}

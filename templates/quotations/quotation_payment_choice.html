@@ -1,0 +1,75 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}اختيار طريقة الدفع | منصة وقاية{% endblock %}
+{% block page_title %}اختيار طريقة الدفع{% endblock %}
+{% block page_subtitle %}اختر طريقة الدفع المناسبة بعد قبول عرض السعر{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <div class="alert alert-success mb-4">
+            تم قبول عرض السعر رقم <strong>{{ quotation.quotation_number }}</strong>،
+            اختر الآن طريقة الدفع المناسبة.
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="payment-methods">
+                <label class="payment-card">
+                    <input type="radio" name="payment_method" value="platform_card" required>
+                    <div>
+                        <strong>الدفع عبر المنصة ببطاقة الصراف</strong>
+                        <div class="text-muted small">سيتم لاحقاً ربطها ببوابة دفع إلكترونية</div>
+                    </div>
+                </label>
+
+                <label class="payment-card">
+                    <input type="radio" name="payment_method" value="bank_transfer" required>
+                    <div>
+                        <strong>إرفاق إيصال التحويل</strong>
+                        <div class="text-muted small">سيتم لاحقاً إضافة رفع ملف الإيصال</div>
+                    </div>
+                </label>
+
+                <label class="payment-card">
+                    <input type="radio" name="payment_method" value="cash" required>
+                    <div>
+                        <strong>الدفع نقداً</strong>
+                        <div class="text-muted small">يتم السداد حسب الدفعات المحددة في العرض</div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-main">حفظ طريقة الدفع</button>
+                <a href="{% url 'quotation_detail' quotation.id %}" class="btn btn-light">رجوع</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.payment-methods {
+    display: grid;
+    gap: 14px;
+}
+
+.payment-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    background: #fff;
+}
+
+.payment-card input {
+    width: 18px;
+    height: 18px;
+    margin-top: 4px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}إضافة عقد | منصة وقاية{% endblock %}
+{% if is_edit %}
+    تعديل عقد صيانة
+{% else %}
+    إضافة عقد صيانة
+{% endif %}
+{% block page_subtitle %}إدخال بيانات العقد الأساسية واختيار البنود{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-main">حفظ العقد</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة الشهادة | {{ certificate.certificate_number }}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Cairo", sans-serif;
+            direction: rtl;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 10px 0;
+            color: #1f2937;
+        }
+
+        .print-actions {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .print-btn {
+            background: #8b1e2d;
+            color: #fff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 800;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .page {
+            width: 297mm;
+            height: 210mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 6mm 8mm 7mm;
+            box-shadow: 0 0 25px rgba(0, 0, 0, .08);
+            overflow: hidden;
+        }
+
+        .letterhead {
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .letterhead img {
+            max-width: 100%;
+            max-height: 55px;
+            object-fit: contain;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #8b1e2d;
+            line-height: 1.3;
+        }
+
+        .title-line {
+            width: 140px;
+            height: 3px;
+            background: #8b1e2d;
+            margin: 5px auto 0;
+            border-radius: 999px;
+        }
+
+        .top-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 6px;
+        }
+
+        .top-info-table td {
+            border: 1px solid #b91c1c;
+            padding: 5px 4px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .top-info-table .label {
+            background: #b91c1c;
+            color: #fff;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .top-info-table .value {
+            background: #fff;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .official-note {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 800;
+            margin: 6px 0 8px;
+            line-height: 1.7;
+            color: #8b1e2d;
+        }
+
+        .official-note .institution-name {
+            color: #8b1e2d;
+        }
+
+        .dual-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            align-items: start;
+            margin-bottom: 6px;
+        }
+
+        .table-card {
+            border: 1.5px solid #b91c1c;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .table-title {
+            background: #b91c1c;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 800;
+            text-align: center;
+            padding: 5px 8px;
+        }
+
+        .clauses-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .clauses-table th,
+        .clauses-table td {
+            border: 1px solid #d6d3d1;
+            padding: 4px 4px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .clauses-table th {
+            background: #fef2f2;
+            color: #7f1d1d;
+            font-weight: 800;
+        }
+
+        .clauses-table .item-col {
+            width: 46%;
+        }
+
+        .clauses-table .date-col {
+            width: 24%;
+        }
+
+        .clauses-table .check-col {
+            width: 15%;
+        }
+
+        .mark {
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1;
+            display: inline-block;
+        }
+
+        .mark-yes {
+            color: #15803d;
+        }
+
+        .mark-no {
+            color: #b91c1c;
+        }
+
+        .empty-row td {
+            color: #6b7280;
+            padding: 10px 6px;
+        }
+
+        .warning-box {
+            margin-top: 4px;
+            background: #b91c1c;
+            color: #fff;
+            border-radius: 12px;
+            padding: 6px 10px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.7;
+        }
+
+        .bottom-note {
+            text-align: center;
+            color: #b91c1c;
+            font-size: 12px;
+            font-weight: 800;
+            margin: 5px 0 7px;
+            line-height: 1.6;
+        }
+
+        .bottom-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            margin-top: 4px;
+        }
+
+        .mini-note-box {
+            width: 34%;
+            background: #b91c1c;
+            color: #fff;
+            border-radius: 14px;
+            padding: 7px 10px;
+            font-size: 10px;
+            line-height: 1.7;
+            font-weight: 700;
+        }
+
+        .signature-section {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 30px;
+            margin-top: 0;
+        }
+
+        .signature-item {
+            text-align: center;
+            width: 180px;
+        }
+
+        .signature-title {
+            font-weight: 800;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #7f1d1d;
+        }
+
+        .signature-box {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .signature-box img {
+            max-height: 55px;
+            max-width: 110px;
+            object-fit: contain;
+        }
+
+        .signature-line {
+            width: 90px;
+            border-bottom: 2px solid #444;
+        }
+
+        .stamp-box img {
+            max-height: 70px;
+            max-width: 120px;
+            object-fit: contain;
+            opacity: 0.95;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .print-actions {
+                display: none;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-actions">
+    <button class="print-btn" onclick="window.print()">طباعة</button>
+</div>
+
+<div class="page">
+
+    {% if certificate.institution.letterhead %}
+    <div class="letterhead">
+        <img src="{{ certificate.institution.letterhead.url }}" alt="مطبوعات المؤسسة">
+    </div>
+    {% endif %}
+
+    <div class="title">
+        <h1>شهادة إنهاء أعمال رقم {{ certificate.certificate_number }}</h1>
+        <div class="title-line"></div>
+    </div>
+
+    <table class="top-info-table">
+        <tr>
+            <td class="label">رقم التصريح</td>
+            <td class="value">{{ certificate.certificate_number|default:"-" }}</td>
+
+            <td class="label">اسم المستفيد</td>
+            <td class="value">{{ certificate.beneficiary_name|default:"-" }}</td>
+
+            <td class="label">اسم المالك</td>
+            <td class="value">{{ certificate.owner_name|default:"-" }}</td>
+
+            <td class="label">العنوان</td>
+            <td class="value">{{ certificate.building_location|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">نوع النشاط</td>
+            <td class="value">{{ certificate.activity|default:"-" }}</td>
+
+            <td class="label">اسم المنشأة</td>
+            <td class="value">{{ certificate.building_name|default:"-" }}</td>
+
+            <td class="label">عدد الأدوار</td>
+            <td class="value">-</td>
+
+            <td class="label">رقم العقد / تاريخ انتهائه</td>
+            <td class="value">
+                {{ certificate.contract.contract_number|default:"-" }}
+                <br>
+                {{ expiry_date_hijri|default:"-" }}
+            </td>
+        </tr>
+    </table>
+
+    <div class="official-note">
+        تشهد مؤسسة
+        <span class="institution-name">({{ certificate.institution.name }})</span>
+        بأن الموضح بعاليه قد قام بتوفير التالي:
+    </div>
+
+    <div class="dual-section">
+        <div class="table-card">
+            <div class="table-title">وسائل السلامة المتوفرة</div>
+            <table class="clauses-table">
+                <thead>
+                    <tr>
+                        <th class="item-col">البند</th>
+                        <th class="date-col">تاريخ انتهائه</th>
+                        <th class="check-col">تركيب</th>
+                        <th class="check-col">صيانة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for clause in certificate.clauses.all %}
+                        {% if clause.clause_type == "safety_tools" %}
+                        <tr>
+                            <td>{{ clause.title }}</td>
+                            <td>{{ expiry_date_hijri|default:"-" }}</td>
+                            <td>
+                                {% if clause.work_type == "installation" %}
+                                    <span class="mark mark-yes">✓</span>
+                                {% else %}
+                                    <span class="mark mark-no">✗</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if clause.work_type == "maintenance" %}
+                                    <span class="mark mark-yes">✓</span>
+                                {% else %}
+                                    <span class="mark mark-no">✗</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% empty %}
+                        <tr class="empty-row">
+                            <td colspan="4">لا توجد بنود مضافة</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <div class="table-title">نظام الإطفاء</div>
+            <table class="clauses-table">
+                <thead>
+                    <tr>
+                        <th class="item-col">البند</th>
+                        <th class="date-col">تاريخ انتهائه</th>
+                        <th class="check-col">تركيب</th>
+                        <th class="check-col">صيانة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for clause in certificate.clauses.all %}
+                        {% if clause.clause_type == "fire_system" %}
+                        <tr>
+                            <td>{{ clause.title }}</td>
+                            <td>{{ expiry_date_hijri|default:"-" }}</td>
+                            <td>
+                                {% if clause.work_type == "installation" %}
+                                    <span class="mark mark-yes">✓</span>
+                                {% else %}
+                                    <span class="mark mark-no">✗</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if clause.work_type == "maintenance" %}
+                                    <span class="mark mark-yes">✓</span>
+                                {% else %}
+                                    <span class="mark mark-no">✗</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% empty %}
+                        <tr class="empty-row">
+                            <td colspan="4">لا توجد بنود مضافة</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        يلاحظ تعبأ هذه الشهادة بعد الانتهاء من تركيب متطلبات السلامة بالكامل والتأكد من جاهزيتها وتحت مسؤولية الشركة،
+        وتكون مسؤولة أمام الدفاع المدني عن كل ما يخالف ما يذكر في الشهادة ويحق للدفاع المدني اتخاذ كافة الإجراءات بحق الشركة المخالفة.
+    </div>
+
+    <div class="bottom-note">
+        تم التأكد من فهم العاملين لكيفية التعامل مع متطلبات السلامة بالمبنى
+    </div>
+
+    <div class="bottom-area">
+        <div class="mini-note-box">
+            • تعطى هذه الشهادة لصاحب المنشأة التي تتوفر بها جميع أمور السلامة وفق النشاط بالكامل.<br>
+            • يجب إبلاغ صاحب المنشأة بأن فترة العقد يجب أن تغطي فترة التصريح بالكامل.<br>
+            • في حال التركيب أو الصيانة من قبل المؤسسة يوضع أمام النوع (✓) ويكتب تاريخ انتهاء العقد أمامها، عدا ذلك يوضع (✗).
+        </div>
+
+        <div class="signature-section">
+            <div class="signature-item">
+                <div class="signature-title">المدير التنفيذي</div>
+                <div class="signature-box">
+                    {% if certificate.institution.signature %}
+                        <img src="{{ certificate.institution.signature.url }}" alt="توقيع المدير التنفيذي">
+                    {% else %}
+                        <div class="signature-line"></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="signature-item">
+                <div class="signature-title">الختم</div>
+                <div class="signature-box stamp-box">
+                    {% if certificate.institution.stamp %}
+                        <img src="{{ certificate.institution.stamp.url }}" alt="ختم المؤسسة">
+                    {% else %}
+                        <div class="signature-line"></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,346 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة العقد | {{ contract.contract_number }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Cairo", sans-serif;
+            direction: rtl;
+            color: #111;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .print-actions {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .print-btn {
+            background: #7a0f1d;
+            color: #fff;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #fff;
+            box-sizing: border-box;
+            padding: 18mm 16mm 20mm;
+            box-shadow: 0 0 25px rgba(0,0,0,0.08);
+        }
+
+        .letterhead {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .letterhead img {
+            max-width: 100%;
+            max-height: 130px;
+            object-fit: contain;
+        }
+
+        .doc-title {
+            text-align: center;
+            margin: 8px 0 20px;
+        }
+
+        .doc-title h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .doc-title .line {
+            width: 180px;
+            height: 3px;
+            background: #7a0f1d;
+            margin: 10px auto 0;
+            border-radius: 999px;
+        }
+
+        .opening-text {
+            line-height: 2.2;
+            font-size: 15px;
+            margin-bottom: 22px;
+        }
+
+        .section-box {
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 14px;
+            color: #7a0f1d;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px 22px;
+        }
+
+        .info-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .info-item div {
+            font-size: 15px;
+            line-height: 1.9;
+        }
+
+        .clause {
+            margin-bottom: 18px;
+            page-break-inside: avoid;
+        }
+
+        .clause h3 {
+            font-size: 17px;
+            margin: 0 0 8px;
+            color: #222;
+            font-weight: 800;
+        }
+
+        .clause p {
+            margin: 0;
+            line-height: 2.1;
+            font-size: 15px;
+        }
+
+        .closing-text {
+            margin-top: 24px;
+            line-height: 2.2;
+            font-size: 15px;
+        }
+
+        .signatures {
+            margin-top: 55px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 40px;
+            align-items: end;
+        }
+
+        .signature-box {
+            text-align: center;
+        }
+
+        .signature-box h4 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .signature-space {
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .signature-space img {
+            max-height: 70px;
+            max-width: 180px;
+            object-fit: contain;
+        }
+
+        .stamp-space img {
+            max-height: 90px;
+            max-width: 120px;
+            object-fit: contain;
+        }
+
+        .signature-label {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .print-actions {
+                display: none;
+            }
+
+            .page {
+                width: auto;
+                min-height: auto;
+                margin: 0;
+                padding: 10mm 10mm 16mm;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-actions">
+        <button class="print-btn" onclick="window.print()">طباعة</button>
+    </div>
+
+    <div class="page">
+        {% if contract.institution.letterhead %}
+        <div class="letterhead">
+            <img src="{{ contract.institution.letterhead.url }}" alt="مطبوعات المؤسسة">
+        </div>
+        {% endif %}
+
+        <div class="doc-title">
+            <h1>عقد صيانة رقم {{ contract.contract_number }}</h1>
+            <div class="line"></div>
+        </div>
+
+        <div class="opening-text">
+            إنه في يوم <strong>{{ contract.created_at|date:"Y-m-d" }}</strong>
+            الموافق <strong>{{ created_at_hijri }}</strong>،
+            قد تم الاتفاق بين كل من:
+            <strong>{{ contract.institution.name }}</strong> بصفتها الطرف الأول،
+            و<strong>{{ contract.second_party_name }}</strong> بصفته الطرف الثاني،
+            وحيث إن الطرف الثاني يرغب في التعاقد على أعمال الصيانة الدورية الخاصة بأنظمة السلامة
+            بالمبنى المسمى <strong>{{ contract.building_name }}</strong>،
+            فقد اتفق الطرفان وهما في كامل الأهلية الشرعية والنظامية على ما يلي:
+        </div>
+
+        <div class="section-box">
+            <h2 class="section-title">بيانات العقد</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>اسم المؤسسة</strong>
+                    <div>{{ contract.institution.name }}</div>
+                </div>
+
+                <div class="info-item">
+                    <strong>اسم الطرف الثاني</strong>
+                    <div>{{ contract.second_party_name }}</div>
+                </div>
+
+                <div class="info-item">
+                    <strong>اسم المبنى</strong>
+                    <div>{{ contract.building_name }}</div>
+                </div>
+
+                <div class="info-item">
+                    <strong>موقع المبنى</strong>
+                    <div>{{ contract.building_location|default:"-" }}</div>
+                </div>
+
+                <div class="info-item">
+    <strong>تاريخ البداية الميلادي</strong>
+    <div>{{ contract.start_date }}</div>
+</div>
+
+<div class="info-item">
+    <strong>تاريخ البداية الهجري</strong>
+    <div>{{ start_date_hijri }}</div>
+</div>
+
+<div class="info-item">
+    <strong>تاريخ النهاية الميلادي</strong>
+    <div>{{ contract.end_date }}</div>
+</div>
+
+<div class="info-item">
+    <strong>تاريخ النهاية الهجري</strong>
+    <div>{{ end_date_hijri }}</div>
+</div>
+
+                <div class="info-item">
+                    <strong>العميل</strong>
+                    <div>{{ contract.client|default:"-" }}</div>
+                </div>
+
+                <div class="info-item">
+                    <strong>معرف العميل</strong>
+                    <div>{{ contract.client_identifier|default:"-" }}</div>
+                </div>
+            </div>
+            {% if contract.building_location %}
+<div class="section-box">
+    <h2 class="section-title">موقع المبنى</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div style="line-height: 2; font-size: 15px; word-break: break-word;">
+            {{ contract.building_location }}
+        </div>
+
+        {% if building_location_qr %}
+        <div style="text-align: center;">
+            <img src="{{ building_location_qr }}" alt="QR Code" style="width: 120px; height: 120px;">
+            <div style="font-size: 12px; margin-top: 6px;">امسح للوصول إلى الموقع</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+        </div>
+
+        <div class="section-box">
+            <h2 class="section-title">بنود العقد</h2>
+
+            {% for clause in contract.clauses.all %}
+            <div class="clause">
+                <h3>{{ forloop.counter }}. {{ clause.title }}</h3>
+                <p>{{ clause.content|linebreaksbr }}</p>
+            </div>
+            {% empty %}
+            <div class="clause">
+                <p>لا توجد بنود مضافة لهذا العقد.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+    
+
+        <div class="signatures">
+            <div class="signature-box">
+                <h4>الطرف الأول</h4>
+                <div class="signature-space">
+                    {% if contract.institution.signature %}
+                        <img src="{{ contract.institution.signature.url }}" alt="توقيع المؤسسة">
+                    {% endif %}
+                </div>
+
+                <div class="stamp-space">
+                    {% if contract.institution.stamp %}
+                        <img src="{{ contract.institution.stamp.url }}" alt="ختم المؤسسة">
+                    {% endif %}
+                </div>
+
+                <div class="signature-label">
+                    {{ contract.institution.executive_name|default:"اعتماد المؤسسة" }}
+                </div>
+            </div>
+
+            <div class="signature-box">
+                <h4>الطرف الثاني</h4>
+                <div class="signature-space"></div>
+                <div class="stamp-space"></div>
+                <div class="signature-label">الاسم / التوقيع</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

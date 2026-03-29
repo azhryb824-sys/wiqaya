@@ -1,0 +1,17 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}إضافة زيارة | منصة وقاية{% endblock %}
+{% block page_title %}إضافة زيارة{% endblock %}
+{% block page_subtitle %}إنشاء زيارة جديدة مرتبطة بعقد{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-main">حفظ الزيارة</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

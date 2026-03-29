@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة عرض السعر | {{ quotation.quotation_number }}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Cairo", sans-serif;
+            direction: rtl;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 18px 0;
+            color: #1f2937;
+        }
+
+        .print-actions {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .print-btn {
+            background: #8b1e2d;
+            color: #fff;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            font-family: inherit;
+            font-size: 15px;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 18mm 16mm 20mm;
+            box-shadow: 0 0 25px rgba(0, 0, 0, .08);
+        }
+
+        .letterhead {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .letterhead img {
+            max-width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 34px;
+            font-weight: 800;
+            color: #8b1e2d;
+        }
+
+        .title-line {
+            width: 220px;
+            height: 3px;
+            background: #8b1e2d;
+            margin: 10px auto 0;
+            border-radius: 999px;
+        }
+
+        .intro-box {
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 18px 20px;
+            margin-bottom: 18px;
+            line-height: 2.1;
+            font-size: 19px;
+            background: #fff;
+        }
+
+        .intro-box strong {
+            color: #8b1e2d;
+            font-weight: 800;
+        }
+
+        .official-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            table-layout: fixed;
+        }
+
+        .official-table th,
+        .official-table td {
+            border: 1px solid #d1d5db;
+            padding: 10px 8px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 15px;
+            line-height: 1.9;
+        }
+
+        .official-table th {
+            background: #fdf2f2;
+            color: #8b1e2d;
+            font-weight: 800;
+        }
+
+        .official-table td {
+            background: #fff;
+        }
+
+        .official-table .description-col {
+            width: 50%;
+        }
+
+        .official-table .qty-col {
+            width: 12%;
+        }
+
+        .official-table .unit-col {
+            width: 19%;
+        }
+
+        .official-table .total-col {
+            width: 19%;
+        }
+
+        .official-table td.description-cell {
+            text-align: right;
+            direction: rtl;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .totals-wrap {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .totals-table {
+            width: 62%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .totals-table td {
+            border: 1px solid #d1d5db;
+            padding: 11px 10px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 15px;
+            line-height: 1.8;
+            background: #fff;
+        }
+
+        .totals-table .label {
+            background: #fdf2f2;
+            color: #8b1e2d;
+            font-weight: 800;
+            width: 34%;
+        }
+
+        .notes-box {
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 16px 18px;
+            margin-bottom: 22px;
+            background: #fff;
+        }
+
+        .notes-title {
+            color: #8b1e2d;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .notes-list {
+            margin: 0;
+            padding-right: 20px;
+            line-height: 2;
+            font-size: 15px;
+        }
+
+        .notes-list li {
+            margin-bottom: 6px;
+        }
+
+        .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: end;
+            margin-top: 26px;
+        }
+
+        .signature-card {
+            text-align: center;
+        }
+
+        .signature-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #8b1e2d;
+            margin-bottom: 10px;
+        }
+
+        .signature-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .signature-box {
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signature-box img {
+            max-height: 80px;
+            max-width: 150px;
+            object-fit: contain;
+        }
+
+        .stamp-box img {
+            max-height: 105px;
+            max-width: 160px;
+        }
+
+        .signature-line {
+            width: 150px;
+            border-bottom: 2px solid #444;
+        }
+
+        .small-muted {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        @media print {
+            .print-actions {
+                display: none;
+            }
+
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-actions">
+    <button class="print-btn" onclick="window.print()">طباعة</button>
+</div>
+
+<div class="page">
+
+    {% if quotation.institution.letterhead %}
+    <div class="letterhead">
+        <img src="{{ quotation.institution.letterhead.url }}" alt="مطبوعات المؤسسة">
+    </div>
+    {% endif %}
+
+    <div class="title">
+        <h1>عرض أسعار</h1>
+        <div class="title-line"></div>
+    </div>
+
+    <div class="intro-box">
+        السادة المحترمين:
+        <strong>{{ quotation.client_display_name }}</strong>
+        <br>
+        يسرنا نحن
+        <strong>{{ quotation.institution.name }}</strong>
+        أن نتقدم إليكم بعرض أسعارنا رقم
+        <strong>{{ quotation.quotation_number }}</strong>
+        بخصوص
+        <strong>{{ quotation.building_name }}</strong>
+        الكائن بـ
+        <strong>{{ quotation.building_location }}</strong>
+        ونتمنى أن تنال أسعارنا رضاكم.
+    </div>
+
+    <table class="official-table">
+        <thead>
+            <tr>
+                <th class="description-col">الإيضاحات</th>
+                <th class="qty-col">الكمية</th>
+                <th class="unit-col">السعر الفرادي</th>
+                <th class="total-col">السعر الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in quotation.items.all %}
+            <tr>
+                <td class="description-cell">{{ item.description|linebreaksbr }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }} ريال</td>
+                <td>{{ item.total_price }} ريال</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">لا توجد بنود في عرض السعر</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals-wrap">
+        <table class="totals-table">
+            <tbody>
+                <tr>
+                    <td class="label">السعر الإجمالي</td>
+                    <td>{{ quotation.subtotal }} ريال</td>
+                </tr>
+                <tr>
+                    <td class="label">ضريبة القيمة المضافة 15%</td>
+                    <td>{{ quotation.vat_amount }} ريال</td>
+                </tr>
+                <tr>
+                    <td class="label">الإجمالي شامل الضريبة كتابةً</td>
+                    <td>{{ quotation.grand_total_words|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td class="label">الإجمالي شامل الضريبة رقماً</td>
+                    <td>{{ quotation.grand_total }} ريال سعودي</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="notes-box">
+        <div class="notes-title">ملاحظات</div>
+        <ol class="notes-list">
+            <li>طريقة الدفع: {{ quotation.payment_terms|linebreaksbr }}</li>
+            <li>مدة التنفيذ: {{ quotation.execution_period|default:"-" }}</li>
+            <li>رقم حساب المؤسسة: {{ quotation.institution_account_number }}</li>
+        </ol>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-card">
+            <div class="signature-title">المدير التنفيذي</div>
+            <div class="signature-name">
+                {{ quotation.executive|default:quotation.institution.executive_name|default:"-" }}
+            </div>
+            <div class="signature-box">
+                {% if quotation.institution.signature %}
+                    <img src="{{ quotation.institution.signature.url }}" alt="توقيع المدير التنفيذي">
+                {% else %}
+                    <div class="signature-line"></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="signature-card">
+            <div class="signature-title">اسم المؤسسة / الختم</div>
+            <div class="signature-name">{{ quotation.institution.name }}</div>
+            <div class="signature-box stamp-box">
+                {% if quotation.institution.stamp %}
+                    <img src="{{ quotation.institution.stamp.url }}" alt="ختم المؤسسة">
+                {% else %}
+                    <div class="signature-line"></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

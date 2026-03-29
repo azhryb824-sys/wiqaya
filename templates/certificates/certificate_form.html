@@ -1,0 +1,150 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}إنشاء شهادة | منصة وقاية{% endblock %}
+{% block page_title %}إنشاء شهادة إنهاء أعمال{% endblock %}
+{% block page_subtitle %}إدخال بيانات الشهادة واختيار البنود{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        {% if fixed_contract %}
+        <div class="alert alert-info mb-4">
+            سيتم إنشاء الشهادة للعقد رقم:
+            <strong>{{ fixed_contract.contract_number }}</strong>
+            — {{ fixed_contract.second_party_name }}
+        </div>
+        {% endif %}
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+                {% if field.name != "clause_templates" and "work_type_" not in field.name and field.name != "expiry_date" %}
+                <p>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <span class="text-danger small">{{ field.errors }}</span>
+                    {% endif %}
+                </p>
+                {% endif %}
+            {% endfor %}
+
+            <div class="mb-4">
+                <label class="form-label d-block mb-3">بنود الشهادة</label>
+
+                {% if clause_rows %}
+                    <div class="certificate-clauses-box">
+                        {% for row in clause_rows %}
+                        <div class="certificate-clause-item">
+                            <div class="certificate-clause-main">
+                                <label class="certificate-clause-check-wrap">
+                                    <input
+                                        type="checkbox"
+                                        name="{{ row.checkbox_name }}"
+                                        value="{{ row.checkbox_value }}"
+                                        {% if row.checkbox_checked %}checked{% endif %}
+                                    >
+                                    <span class="certificate-clause-label">
+                                        {{ row.template.title }}
+                                    </span>
+                                </label>
+
+                                {% if row.template.details %}
+                                <div class="certificate-clause-details">
+                                    {{ row.template.details }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="certificate-clause-worktype">
+                                <label class="small mb-1 d-block">{{ row.work_field.label }}</label>
+                                {{ row.work_field }}
+                                {% if row.work_field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ row.work_field.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-muted">لا توجد بنود متاحة حالياً.</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-main">حفظ الشهادة</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.certificate-clauses-box {
+    display: grid;
+    gap: 12px;
+}
+
+.certificate-clause-item {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1px solid #d9dee5;
+    border-radius: 14px;
+    background: #fff;
+    margin-bottom: 10px;
+}
+
+.certificate-clause-check-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 700;
+}
+
+.certificate-clause-check-wrap input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #7a0f1d;
+}
+
+.certificate-clause-label {
+    color: #1f2937;
+    line-height: 1.8;
+}
+
+.certificate-clause-details {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.certificate-clause-worktype select {
+    width: 100%;
+}
+
+.styled-form input[readonly] {
+    background-color: #f8fafc;
+    color: #7a0f1d;
+    font-weight: 700;
+    cursor: not-allowed;
+}
+
+@media (max-width: 767px) {
+    .certificate-clause-item {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

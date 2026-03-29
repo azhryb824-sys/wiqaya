@@ -1,0 +1,65 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}الزيارات | منصة وقاية{% endblock %}
+{% block page_title %}الزيارات{% endblock %}
+{% block page_subtitle %}إدارة ومتابعة الزيارات{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-header d-flex justify-content-between align-items-center">
+        <h4>قائمة الزيارات</h4>
+        {% if request.user.user_type == "executive" or request.user.user_type == "admin_assistant" %}
+        <a href="{% url 'visit_create' %}" class="btn btn-main">إضافة زيارة</a>
+        {% endif %}
+    </div>
+
+    <div class="panel-card-body">
+        <div class="table-responsive">
+            <table class="table align-middle custom-table">
+                <thead>
+                    <tr>
+                        <th>العقد</th>
+                        <th>الفني</th>
+                        <th>التاريخ</th>
+                        <th>الشهر</th>
+                        <th>اعتماد الفني</th>
+                        <th>اعتماد العميل</th>
+                        <th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in visits %}
+                    <tr>
+                        <td>{{ visit.contract.contract_number }}</td>
+                        <td>{{ visit.technician|default:"-" }}</td>
+                        <td>{{ visit.visit_date }}</td>
+                        <td>{{ visit.month_label|default:"-" }}</td>
+                        <td>
+                            {% if visit.technician_approved %}
+                            <span class="badge text-bg-success">معتمد</span>
+                            {% else %}
+                            <span class="badge text-bg-warning">غير معتمد</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visit.client_approved %}
+                            <span class="badge text-bg-success">معتمد</span>
+                            {% else %}
+                            <span class="badge text-bg-warning">غير معتمد</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'visit_detail' visit.id %}" class="btn btn-sm btn-outline-dark">عرض</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">لا توجد زيارات حالياً</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

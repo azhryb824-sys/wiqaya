@@ -1,0 +1,17 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ page_title|default:"بيانات المؤسسة" }} | منصة وقاية{% endblock %}
+{% block page_title %}{{ page_title|default:"بيانات المؤسسة" }}{% endblock %}
+{% block page_subtitle %}إدارة بيانات المؤسسة الرسمية{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <form method="post" enctype="multipart/form-data" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-main">حفظ البيانات</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

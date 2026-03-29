@@ -1,0 +1,296 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ page_title }} | منصة وقاية{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}إدخال بيانات عرض السعر والبنود والدفعات{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-grid two-cols">
+                {% for field in form %}
+                {% if field.name != "grand_total_words" and field.name != "execution_period" %}
+                <div class="{% if field.name == 'payment_terms' or field.name == 'building_location' %}full-span{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-help-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div class="text-danger small mt-1">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="auto-note-box mt-4">
+                <div class="auto-note-title">ملاحظات تلقائية</div>
+                <ul class="auto-note-list mb-0">
+                    <li>سيقوم النظام بحساب المجموع وضريبة القيمة المضافة 15% والإجمالي تلقائياً.</li>
+                    <li>سيقوم النظام بكتابة المبلغ الإجمالي شامل الضريبة بالحروف تلقائياً.</li>
+                    <li>سيقوم النظام بإنشاء مدة التنفيذ تلقائياً بناءً على عدد أيام التنفيذ واسم أول دفعة.</li>
+                </ul>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="section-header">
+                <h4>بنود عرض السعر</h4>
+                <p class="text-muted mb-0">أدخل البنود التي ستظهر داخل جدول العرض</p>
+            </div>
+
+            {{ item_formset.management_form }}
+
+            {% if item_formset.non_form_errors %}
+            <div class="alert alert-danger mb-3">
+                {{ item_formset.non_form_errors }}
+            </div>
+            {% endif %}
+
+            <div class="items-box">
+                {% for item_form in item_formset %}
+                <div class="item-card">
+                    {% for hidden in item_form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+
+                    <div class="form-grid item-grid">
+                        <div class="item-description">
+                            <label class="form-label">{{ item_form.description.label }}</label>
+                            {{ item_form.description }}
+                            {% if item_form.description.errors %}
+                            <div class="text-danger small mt-1">{{ item_form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="form-label">{{ item_form.quantity.label }}</label>
+                            {{ item_form.quantity }}
+                            {% if item_form.quantity.errors %}
+                            <div class="text-danger small mt-1">{{ item_form.quantity.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="form-label">{{ item_form.unit_price.label }}</label>
+                            {{ item_form.unit_price }}
+                            {% if item_form.unit_price.errors %}
+                            <div class="text-danger small mt-1">{{ item_form.unit_price.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="form-label">{{ item_form.order.label }}</label>
+                            {{ item_form.order }}
+                            {% if item_form.order.errors %}
+                            <div class="text-danger small mt-1">{{ item_form.order.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if item_formset.can_delete %}
+                        <div class="delete-box">
+                            <label class="form-label d-block">{{ item_form.DELETE.label }}</label>
+                            <div class="delete-check">
+                                {{ item_form.DELETE }}
+                                <span>حذف هذا البند</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <hr class="my-4">
+
+            <div class="section-header">
+                <h4>الدفعات</h4>
+                <p class="text-muted mb-0">حدد نسب الدفعات ومواعيدها بحيث يكون مجموع النسب 100%</p>
+            </div>
+
+            {{ installment_formset.management_form }}
+
+            {% if installment_formset.non_form_errors %}
+            <div class="alert alert-danger mb-3">
+                {{ installment_formset.non_form_errors }}
+            </div>
+            {% endif %}
+
+            <div class="installments-box">
+                {% for installment_form in installment_formset %}
+                <div class="installment-card">
+                    {% for hidden in installment_form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+
+                    <div class="form-grid installment-grid">
+                        <div>
+                            <label class="form-label">{{ installment_form.title.label }}</label>
+                            {{ installment_form.title }}
+                            {% if installment_form.title.errors %}
+                            <div class="text-danger small mt-1">{{ installment_form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="form-label">{{ installment_form.percentage.label }}</label>
+                            {{ installment_form.percentage }}
+                            {% if installment_form.percentage.errors %}
+                            <div class="text-danger small mt-1">{{ installment_form.percentage.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="form-label">{{ installment_form.due_description.label }}</label>
+                            {{ installment_form.due_description }}
+                            {% if installment_form.due_description.errors %}
+                            <div class="text-danger small mt-1">{{ installment_form.due_description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if installment_formset.can_delete %}
+                        <div class="delete-box">
+                            <label class="form-label d-block">{{ installment_form.DELETE.label }}</label>
+                            <div class="delete-check">
+                                {{ installment_form.DELETE }}
+                                <span>حذف هذه الدفعة</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-main">حفظ عرض السعر</button>
+                <a href="{% url 'quotation_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.two-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.full-span {
+    grid-column: 1 / -1;
+}
+
+.section-header {
+    margin-bottom: 14px;
+}
+
+.section-header h4 {
+    margin: 0 0 4px;
+    color: #7a0f1d;
+    font-weight: 800;
+}
+
+.items-box,
+.installments-box {
+    display: grid;
+    gap: 14px;
+}
+
+.item-card,
+.installment-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #fff;
+    padding: 16px;
+}
+
+.item-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    align-items: end;
+}
+
+.item-description {
+    grid-column: span 1;
+}
+
+.installment-grid {
+    grid-template-columns: 1.5fr 1fr 1.5fr 1fr;
+    align-items: end;
+}
+
+.delete-box {
+    min-width: 140px;
+}
+
+.delete-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.auto-note-box {
+    background: #fff8f1;
+    border: 1px solid #fde7c7;
+    border-radius: 18px;
+    padding: 16px 18px;
+}
+
+.auto-note-title {
+    color: #7a0f1d;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.auto-note-list {
+    padding-right: 18px;
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.9;
+}
+
+.form-help-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 6px;
+}
+
+textarea,
+input,
+select {
+    width: 100%;
+}
+
+@media (max-width: 991px) {
+    .two-cols,
+    .item-grid,
+    .installment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full-span {
+        grid-column: auto;
+    }
+}
+</style>
+{% endblock %}

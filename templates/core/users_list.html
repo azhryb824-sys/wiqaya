@@ -1,0 +1,54 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}المستخدمون | منصة وقاية{% endblock %}
+{% block page_title %}إدارة المستخدمين{% endblock %}
+{% block page_subtitle %}عرض وإدارة حسابات المنصة{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-header d-flex justify-content-between align-items-center">
+        <h4>قائمة المستخدمين</h4>
+        <a href="{% url 'create_user' %}" class="btn btn-main">إضافة مستخدم</a>
+    </div>
+
+    <div class="panel-card-body">
+        <div class="table-responsive">
+            <table class="table align-middle custom-table">
+                <thead>
+                    <tr>
+                        <th>اسم المستخدم</th>
+                        <th>الاسم</th>
+                        <th>النوع</th>
+                        <th>الجوال</th>
+                        <th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.get_full_name|default:"-" }}</td>
+                        <td>{{ u.get_user_type_display }}</td>
+                        <td>{{ u.phone|default:"-" }}</td>
+                        <td>
+                            {% if u != request.user %}
+                            <a href="{% url 'delete_user' u.id %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('هل أنت متأكد من حذف هذا المستخدم؟');">
+                                حذف
+                            </a>
+                            {% else %}
+                            <span class="text-muted">الحساب الحالي</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">لا يوجد مستخدمون حالياً</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

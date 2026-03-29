@@ -1,0 +1,65 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}إضافة بند شهادة{% endblock %}
+{% block page_title %}إضافة بند شهادة{% endblock %}
+{% block page_subtitle %}إضافة قالب جديد لبنود الشهادة{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <p>
+                <label for="{{ form.clause_type.id_for_label }}">نوع البند</label>
+                {{ form.clause_type }}
+                {% if form.clause_type.errors %}
+                <span class="text-danger small">{{ form.clause_type.errors }}</span>
+                {% endif %}
+            </p>
+
+            <p>
+                <label for="{{ form.title.id_for_label }}">اسم البند</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <span class="text-danger small">{{ form.title.errors }}</span>
+                {% endif %}
+            </p>
+
+            <p>
+                <label for="{{ form.details.id_for_label }}">التفاصيل</label>
+                {{ form.details }}
+                {% if form.details.errors %}
+                <span class="text-danger small">{{ form.details.errors }}</span>
+                {% endif %}
+            </p>
+
+            <p>
+                <label for="{{ form.order.id_for_label }}">الترتيب</label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                <span class="text-danger small">{{ form.order.errors }}</span>
+                {% endif %}
+            </p>
+
+            <p>
+                <label for="{{ form.is_active.id_for_label }}">نشط</label>
+                {{ form.is_active }}
+                {% if form.is_active.errors %}
+                <span class="text-danger small">{{ form.is_active.errors }}</span>
+                {% endif %}
+            </p>
+
+            <button type="submit" class="btn btn-main mt-3">حفظ بند الشهادة</button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

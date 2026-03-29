@@ -1,0 +1,72 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}قرار العميل | منصة وقاية{% endblock %}
+{% block page_title %}قرار العميل على عرض السعر{% endblock %}
+{% block page_subtitle %}يمكنك قبول عرض السعر أو رفضه مع إضافة ملاحظة{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <div class="alert alert-info mb-4">
+            عرض السعر رقم <strong>{{ quotation.quotation_number }}</strong>
+            الخاص بـ <strong>{{ quotation.building_name }}</strong>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label class="form-label d-block mb-3">اختر القرار</label>
+                <div class="decision-options">
+                    <label class="decision-card">
+                        <input type="radio" name="decision" value="accept" required>
+                        <span>قبول العرض</span>
+                    </label>
+
+                    <label class="decision-card reject">
+                        <input type="radio" name="decision" value="reject" required>
+                        <span>رفض العرض</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">ملاحظة العميل</label>
+                <textarea name="client_decision_note" class="form-control" rows="4" placeholder="اكتب ملاحظتك هنا إن وجدت"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-main">حفظ القرار</button>
+            <a href="{% url 'quotation_detail' quotation.id %}" class="btn btn-light">رجوع</a>
+        </form>
+    </div>
+</div>
+
+<style>
+.decision-options {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.decision-card {
+    border: 1px solid #d1d5db;
+    border-radius: 16px;
+    padding: 16px 18px;
+    min-width: 180px;
+    cursor: pointer;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.decision-card.reject {
+    border-color: #fecaca;
+}
+
+.decision-card input {
+    width: 18px;
+    height: 18px;
+}
+</style>
+{% endblock %}

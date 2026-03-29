@@ -1,0 +1,107 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}سجل الزيارات | منصة وقاية{% endblock %}
+{% block page_title %}سجل الزيارات{% endblock %}
+{% block page_subtitle %}سجل الزيارات المرتبط بالعقد {{ contract.contract_number }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <strong>رقم العقد:</strong> {{ contract.contract_number }}
+        <span class="mx-2">|</span>
+        <strong>الطرف الثاني:</strong> {{ contract.second_party_name }}
+        <span class="mx-2">|</span>
+        <strong>المبنى:</strong> {{ contract.building_name }}
+    </div>
+
+    <a href="{% url 'contract_visits_log_print' contract.id %}" target="_blank" class="btn btn-main">
+        <i class="bi bi-printer"></i>
+        طباعة السجل
+    </a>
+</div>
+
+{% if contract.building_location %}
+<div class="panel-card mb-3">
+    <div class="panel-card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <h5 class="mb-2">موقع المبنى</h5>
+            <div>
+                <a href="{{ contract.building_location }}" target="_blank" dir="ltr">
+                    {{ contract.building_location }}
+                </a>
+            </div>
+        </div>
+
+        {% if building_location_qr %}
+        <div class="text-center">
+            <img src="{{ building_location_qr }}" alt="QR Code" style="width: 120px; height: 120px;">
+            <div class="small text-muted mt-2">امسح للوصول إلى موقع المبنى</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="panel-card">
+    <div class="panel-card-body">
+        <div class="table-responsive">
+            <table class="table align-middle custom-table visit-log-table">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الشهر الهجري</th>
+                        <th>الفني</th>
+                        <th>ملاحظات الفني</th>
+                        <th>اعتماد الفني</th>
+                        <th>اعتماد العميل</th>
+                        <th>الحالة</th>
+                        <th>تفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in visits %}
+                    <tr>
+                        <td>{{ visit.visit_date }}</td>
+                        <td>{{ visit.month_label|default:"-" }}</td>
+                        <td>{{ visit.technician|default:"-" }}</td>
+                        <td class="visit-note-cell">{{ visit.notes|default:"-"|truncatechars:80 }}</td>
+                        <td>
+                            {% if visit.technician_approved %}
+                                <span class="badge text-bg-success">تم</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">معلق</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visit.client_approved %}
+                                <span class="badge text-bg-success">تم</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">معلق</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visit.technician_approved and visit.client_approved %}
+                                <span class="visit-status completed">مكتملة</span>
+                            {% elif visit.technician_approved %}
+                                <span class="visit-status pending-client">بانتظار العميل</span>
+                            {% else %}
+                                <span class="visit-status pending-tech">بانتظار الفني</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'visit_detail' visit.id %}" class="btn btn-sm btn-outline-dark">
+                                عرض
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">لا توجد زيارات لهذا العقد</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

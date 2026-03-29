@@ -1,0 +1,121 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}تفاصيل الشهادة | منصة وقاية{% endblock %}
+{% block page_title %}تفاصيل الشهادة{% endblock %}
+{% block page_subtitle %}عرض بيانات شهادة إنهاء الأعمال{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-end mb-3 gap-2 flex-wrap">
+    <a href="{% url 'certificate_print' certificate.id %}" target="_blank" class="btn btn-main">
+        <i class="bi bi-printer"></i>
+        طباعة الشهادة
+    </a>
+
+    {% if certificate.contract %}
+    <a href="{% url 'contract_detail' certificate.contract.id %}" class="btn btn-outline-dark">
+        <i class="bi bi-file-earmark-text"></i>
+        عرض العقد المرتبط
+    </a>
+    {% endif %}
+</div>
+
+<div class="panel-card mb-4">
+    <div class="panel-card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <strong>رقم الشهادة:</strong>
+                <div>{{ certificate.certificate_number }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>رقم العقد المرتبط:</strong>
+                <div>
+                    {% if certificate.contract %}
+                        {{ certificate.contract.contract_number }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم العميل:</strong>
+                <div>{{ certificate.client|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم المؤسسة:</strong>
+                <div>{{ certificate.institution.name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>المدير التنفيذي:</strong>
+                <div>{{ certificate.executive|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم المستفيد:</strong>
+                <div>{{ certificate.beneficiary_name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم المالك:</strong>
+                <div>{{ certificate.owner_name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم المبنى:</strong>
+                <div>{{ certificate.building_name }}</div>
+            </div>
+
+            <div class="col-md-6"><strong>النشاط:</strong><div>{{ certificate.activity|default:"-" }}</div></div>
+
+            <div class="col-md-6">
+                <strong>موقع المبنى:</strong>
+                <div>{{ certificate.building_location|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>تاريخ الإصدار:</strong>
+                <div>{{ certificate.issue_date }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>تاريخ الانتهاء:</strong>
+                <div>{{ certificate.expiry_date|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>تاريخ إنشاء الشهادة:</strong>
+                <div>{{ certificate.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+
+            <div class="col-12">
+                <strong>ملاحظات:</strong>
+                <div>{{ certificate.notes|default:"-"|linebreaksbr }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card">
+    <div class="panel-card-header">
+        <h4>بنود الشهادة</h4>
+    </div>
+    <div class="panel-card-body">
+        {% for clause in certificate.clauses.all %}
+<div class="mb-4">
+    <h5>{{ forloop.counter }}. {{ clause.title }}</h5>
+    <div>نوع البند: {{ clause.get_clause_type_display }}</div>
+    <div>نوع العمل: {{ clause.get_work_type_display }}</div>
+    <div>تاريخ انتهاء العقد: {{ clause.contract_expiry_date|default:"-" }}</div>
+    {% if clause.details %}
+    <div>التفاصيل: {{ clause.details }}</div>
+    {% endif %}
+</div>
+{% empty %}
+<p class="mb-0">لا توجد بنود مضافة لهذه الشهادة.</p>
+{% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}تفاصيل الزيارة | منصة وقاية{% endblock %}
+{% block page_title %}تفاصيل الزيارة{% endblock %}
+{% block page_subtitle %}عرض بيانات الزيارة واعتمادها{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex gap-2 justify-content-end mb-3 flex-wrap">
+    <a href="{% url 'visit_print' visit.id %}" target="_blank" class="btn btn-main">
+        <i class="bi bi-printer"></i>
+        طباعة الزيارة
+    </a>
+
+    {% if request.user.user_type == "technician" and visit.technician == request.user %}
+        <a href="{% url 'visit_add_note' visit.id %}" class="btn btn-outline-dark">
+            <i class="bi bi-pencil-square"></i>
+            ملاحظات الفني
+        </a>
+
+        <a href="{% url 'visit_sign_technician' visit.id %}" class="btn btn-outline-main">
+            <i class="bi bi-pen"></i>
+            توقيع الفني
+        </a>
+
+        {% if not visit.technician_approved %}
+        <a href="{% url 'visit_technician_approve' visit.id %}" class="btn btn-outline-success">
+            <i class="bi bi-check2-circle"></i>
+            اعتماد الفني
+        </a>
+        {% endif %}
+    {% endif %}
+
+    {% if request.user.user_type == "client" and visit.contract.client == request.user and visit.technician_approved and not visit.client_approved %}
+    <a href="{% url 'visit_client_approve' visit.id %}" class="btn btn-outline-success">
+        <i class="bi bi-check2-square"></i>
+        اعتماد العميل
+    </a>
+    {% endif %}
+
+    <a href="{% url 'contract_visits_log' visit.contract.id %}" class="btn btn-outline-dark">
+        <i class="bi bi-journal-text"></i>
+        سجل الزيارات
+    </a>
+</div>
+
+<div class="panel-card">
+    <div class="panel-card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <strong>رقم العقد:</strong>
+                <div>{{ visit.contract.contract_number }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم المبنى:</strong>
+                <div>{{ visit.contract.building_name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>الطرف الثاني:</strong>
+                <div>{{ visit.contract.second_party_name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>الفني:</strong>
+                <div>{{ visit.technician|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>تاريخ الزيارة:</strong>
+                <div>{{ visit.visit_date }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>الشهر الهجري:</strong>
+                <div>{{ visit.month_label|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اعتماد الفني:</strong>
+                <div>{% if visit.technician_approved %}تم{% else %}لم يتم{% endif %}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اعتماد العميل:</strong>
+                <div>{% if visit.client_approved %}تم{% else %}لم يتم{% endif %}</div>
+            </div>
+
+            <div class="col-12">
+                <strong>ملاحظات الفني:</strong>
+                <div>{{ visit.notes|default:"-"|linebreaksbr }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>توقيع الفني الإلكتروني:</strong>
+                <div class="mt-2">
+                    {% if visit.technician_signature %}
+                        <img src="{{ visit.technician_signature }}" alt="توقيع الفني" style="max-width: 220px; max-height: 100px; border: 1px solid #ddd; border-radius: 8px; background: #fff;">
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+    <strong>اسم معتمد العميل:</strong>
+    <div>
+        {% if visit.client_approved and visit.contract.client %}
+            {{ visit.contract.client }}
+        {% else %}
+            -
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-6">
+    <strong>وقت اعتماد العميل:</strong>
+    <div>
+        {% if visit.client_approved_at %}
+            {{ visit.client_approved_at|date:"Y-m-d H:i" }}
+        {% else %}
+            -
+        {% endif %}
+    </div>
+</div>
+
+            {% if visit.contract.building_location %}
+            <div class="col-12">
+                <strong>موقع المبنى:</strong>
+                <div dir="ltr">{{ visit.contract.building_location }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

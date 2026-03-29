@@ -1,0 +1,95 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}تفاصيل العقد | منصة وقاية{% endblock %}
+{% block page_title %}تفاصيل العقد{% endblock %}
+{% block page_subtitle %}عرض بيانات عقد الصيانة{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex gap-2 justify-content-end mb-3 flex-wrap">
+    <a href="{% url 'contract_print' contract.id %}" target="_blank" class="btn btn-main">
+        <i class="bi bi-printer"></i>
+        طباعة العقد
+    </a>
+
+    <a href="{% url 'contract_edit' contract.id %}" class="btn btn-outline-main">
+        <i class="bi bi-pencil"></i>
+        تعديل العقد
+    </a>
+    <a href="{% url 'certificate_create_from_contract' contract.id %}" class="btn btn-outline-main">
+    <i class="bi bi-patch-check"></i>
+    إنشاء شهادة إنهاء أعمال
+</a>
+
+    <a href="{% url 'contract_visits_log' contract.id %}" class="btn btn-outline-dark">
+        <i class="bi bi-journal-text"></i>
+        سجل الزيارات
+    </a>
+
+    <a href="{% url 'contract_delete' contract.id %}" class="btn btn-outline-danger">
+        <i class="bi bi-trash"></i>
+        حذف العقد
+    </a>
+</div>
+
+<div class="panel-card mb-4">
+    <div class="panel-card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <strong>رقم العقد:</strong>
+                <div>{{ contract.contract_number }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>الطرف الثاني:</strong>
+                <div>{{ contract.second_party_name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>اسم المبنى:</strong>
+                <div>{{ contract.building_name }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>موقع المبنى:</strong>
+                <div>{{ contract.building_location|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>تاريخ البداية:</strong>
+                <div>{{ contract.start_date }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>تاريخ النهاية:</strong>
+                <div>{{ contract.end_date }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>العميل:</strong>
+                <div>{{ contract.client|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>معرف العميل:</strong>
+                <div>{{ contract.client_identifier|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card">
+    <div class="panel-card-header">
+        <h4>بنود العقد</h4>
+    </div>
+    <div class="panel-card-body">
+        {% for clause in contract.clauses.all %}
+        <div class="mb-4">
+            <h5>{{ forloop.counter }}. {{ clause.title }}</h5>
+            <p class="mb-0">{{ clause.content|linebreaksbr }}</p>
+        </div>
+        {% empty %}
+        <p class="mb-0">لا توجد بنود مضافة لهذا العقد.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

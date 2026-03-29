@@ -1,0 +1,51 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}بنود الشهادات{% endblock %}
+{% block page_title %}بنود الشهادات{% endblock %}
+{% block page_subtitle %}إدارة قوالب بنود الشهادات{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-header d-flex justify-content-between align-items-center">
+        <h4>قائمة بنود الشهادات</h4>
+        <a href="{% url 'certificate_clause_create' %}" class="btn btn-main">إضافة بند جديد</a>
+    </div>
+
+    <div class="panel-card-body">
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th>نوع البند</th>
+                        <th>اسم البند</th>
+                        <th>التفاصيل</th>
+                        <th>الترتيب</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in templates %}
+                    <tr>
+                        <td>{{ item.get_clause_type_display }}</td>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.details|default:"-" }}</td>
+                        <td>{{ item.order }}</td>
+                        <td>
+                            {% if item.is_active %}
+                                <span class="badge bg-success">نشط</span>
+                            {% else %}
+                                <span class="badge bg-secondary">غير نشط</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">لا توجد بنود مضافة حالياً.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

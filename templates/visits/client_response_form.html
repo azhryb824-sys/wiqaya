@@ -1,0 +1,17 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}قرار العميل | منصة وقاية{% endblock %}
+{% block page_title %}قرار العميل{% endblock %}
+{% block page_subtitle %}اعتماد أو رفض ملاحظات الزيارة{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <form method="post" enctype="multipart/form-data" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-main">حفظ القرار</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

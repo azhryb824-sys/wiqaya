@@ -1,0 +1,17 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}إضافة بند | منصة وقاية{% endblock %}
+{% block page_title %}إضافة قالب بند{% endblock %}
+{% block page_subtitle %}إنشاء بند افتراضي لاستخدامه داخل العقود{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-main">حفظ البند</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

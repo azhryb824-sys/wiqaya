@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+
+{% block title %}تسجيل الدخول | منصة وقاية{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="auth-card">
+                    <div class="auth-header text-center">
+                        <div class="auth-icon">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h2>تسجيل الدخول</h2>
+                        <p>أدخل بياناتك للوصول إلى لوحة التحكم</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-main w-100">دخول</button>
+                    </form>
+
+                    <div class="auth-footer text-center mt-4">
+                        <p class="mb-0">
+                            ليس لديك حساب؟
+                            <a href="{% url 'register' %}">إنشاء حساب جديد</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

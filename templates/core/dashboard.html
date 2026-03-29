@@ -1,0 +1,153 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}لوحة التحكم | منصة وقاية{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block page_subtitle %}مرحباً {{ user.get_full_name|default:user.username }} - {{ user_type_label }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="stats-grid">
+    {% for item in stats %}
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="bi {{ item.icon }}"></i>
+        </div>
+        <div class="stat-card-body">
+            <h5>{{ item.title }}</h5>
+            <strong>{{ item.value }}</strong>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if request.user.user_type == "executive" %}
+<div class="alerts-grid mt-4">
+
+    <!-- 🔴 عقود تنتهي -->
+    <div class="alert-card danger">
+        <div class="alert-header">
+            <span class="dot red"></span>
+            <h5>عقود تنتهي في {{ current_hijri_month_label }}</h5>
+            <span class="count">{{ executive_alerts.expiring_contracts|length }}</span>
+        </div>
+
+        {% if executive_alerts.expiring_contracts %}
+            <ul>
+                {% for contract in executive_alerts.expiring_contracts %}
+                <li class="alert-row">
+                    <div>
+                        {{ contract.contract_number }} - {{ contract.second_party_name }}
+                    </div>
+
+                    <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
+                        عرض
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty">لا توجد عقود</div>
+        {% endif %}
+    </div>
+
+    <!-- 🟡 بدون زيارة -->
+    <div class="alert-card warning">
+        <div class="alert-header">
+            <span class="dot yellow"></span>
+            <h5>عقود بدون زيارة</h5>
+            <span class="count">{{ executive_alerts.contracts_without_visit|length }}</span>
+        </div>
+
+        {% if executive_alerts.contracts_without_visit %}
+            <ul>
+                {% for contract in executive_alerts.contracts_without_visit %}
+                <li class="alert-row">
+                    <div>
+                        {{ contract.contract_number }} - {{ contract.building_name }}
+                    </div>
+
+                    <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
+                        فتح العقد
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty">كل العقود فيها زيارات</div>
+        {% endif %}
+    </div>
+
+    <!-- 🔵 زيارات -->
+    <div class="alert-card info">
+        <div class="alert-header">
+            <span class="dot blue"></span>
+            <h5>زيارات غير مكتملة</h5>
+            <span class="count">{{ executive_alerts.pending_visits|length }}</span>
+        </div>
+
+        {% if executive_alerts.pending_visits %}
+            <ul>
+                {% for visit in executive_alerts.pending_visits %}
+                <li class="alert-row">
+                    <div>
+                        {{ visit.contract.contract_number }} -
+                        {{ visit.visit_date }} -
+                        {{ visit.status }}
+                    </div>
+
+                    <a href="{% url 'visit_detail' visit.id %}" class="btn btn-sm btn-outline-main">
+                        عرض الزيارة
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty">كل الزيارات مكتملة</div>
+        {% endif %}
+    </div>
+
+</div>
+{% endif %}
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-8">
+        <div class="panel-card">
+            <div class="panel-card-header">
+                <h4>نظرة عامة</h4>
+            </div>
+            <div class="panel-card-body">
+                <p class="mb-0">
+                    هذه النسخة الحالية من لوحة التحكم جاهزة كنقطة انطلاق احترافية.
+                    في الخطوات القادمة سنربط التنبيهات بالشهر الهجري الحقيقي، ونمنع الزيارات للعقود المنتهية،
+                    ونضيف تحسينات أقوى لمطبوعات العقود والسجلات.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="panel-card">
+            <div class="panel-card-header">
+                <h4>إجراءات سريعة</h4>
+            </div>
+            <div class="panel-card-body quick-actions">
+                <a href="{% url 'create_institution' %}" class="quick-action-btn">
+                    <i class="bi bi-building-add"></i>
+                    <span>إنشاء مؤسسة</span>
+                </a>
+                <a href="{% url 'edit_my_institution' %}" class="quick-action-btn">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>تعديل المؤسسة</span>
+                </a>
+                <a href="{% url 'contracts_list' %}" class="quick-action-btn">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>العقود</span>
+                </a>
+                <a href="{% url 'visit_list' %}" class="quick-action-btn">
+                    <i class="bi bi-calendar2-check"></i>
+                    <span>الزيارات</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
