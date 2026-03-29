@@ -2,9 +2,13 @@
 
 {% block title %}لوحة التحكم | منصة وقاية{% endblock %}
 {% block page_title %}لوحة التحكم{% endblock %}
-{% block page_subtitle %}مرحباً {{ user.get_full_name|default:user.username }} - {{ user_type_label }}{% endblock %}
+{% block page_subtitle %}
+مرحباً {{ user.get_full_name|default:user.username }} 👋 — {{ user_type_label }}
+{% endblock %}
 
 {% block dashboard_content %}
+
+<!-- ================= KPIs ================= -->
 <div class="stats-grid">
     {% for item in stats %}
     <div class="stat-card">
@@ -19,14 +23,15 @@
     {% endfor %}
 </div>
 
+<!-- ================= Alerts ================= -->
 {% if request.user.user_type == "executive" %}
 <div class="alerts-grid mt-4">
 
-    <!-- 🔴 عقود تنتهي -->
+    <!-- عقود تنتهي -->
     <div class="alert-card danger">
         <div class="alert-header">
             <span class="dot red"></span>
-            <h5>عقود تنتهي في {{ current_hijri_month_label }}</h5>
+            <h5>عقود تنتهي هذا الشهر</h5>
             <span class="count">{{ executive_alerts.expiring_contracts|length }}</span>
         </div>
 
@@ -35,9 +40,9 @@
                 {% for contract in executive_alerts.expiring_contracts %}
                 <li class="alert-row">
                     <div>
-                        {{ contract.contract_number }} - {{ contract.second_party_name }}
+                        <strong>{{ contract.contract_number }}</strong><br>
+                        {{ contract.second_party_name }}
                     </div>
-
                     <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
                         عرض
                     </a>
@@ -49,7 +54,7 @@
         {% endif %}
     </div>
 
-    <!-- 🟡 بدون زيارة -->
+    <!-- بدون زيارة -->
     <div class="alert-card warning">
         <div class="alert-header">
             <span class="dot yellow"></span>
@@ -62,21 +67,21 @@
                 {% for contract in executive_alerts.contracts_without_visit %}
                 <li class="alert-row">
                     <div>
-                        {{ contract.contract_number }} - {{ contract.building_name }}
+                        <strong>{{ contract.contract_number }}</strong><br>
+                        {{ contract.building_name }}
                     </div>
-
                     <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
-                        فتح العقد
+                        فتح
                     </a>
                 </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <div class="empty">كل العقود فيها زيارات</div>
+            <div class="empty">كل العقود محدثة</div>
         {% endif %}
     </div>
 
-    <!-- 🔵 زيارات -->
+    <!-- زيارات -->
     <div class="alert-card info">
         <div class="alert-header">
             <span class="dot blue"></span>
@@ -89,13 +94,11 @@
                 {% for visit in executive_alerts.pending_visits %}
                 <li class="alert-row">
                     <div>
-                        {{ visit.contract.contract_number }} -
-                        {{ visit.visit_date }} -
-                        {{ visit.status }}
+                        <strong>{{ visit.contract.contract_number }}</strong><br>
+                        {{ visit.visit_date }}
                     </div>
-
                     <a href="{% url 'visit_detail' visit.id %}" class="btn btn-sm btn-outline-main">
-                        عرض الزيارة
+                        عرض
                     </a>
                 </li>
                 {% endfor %}
@@ -108,46 +111,57 @@
 </div>
 {% endif %}
 
-<div class="row g-4 mt-1">
+<!-- ================= Main Layout ================= -->
+<div class="row g-4 mt-3">
+
+    <!-- Overview -->
     <div class="col-lg-8">
         <div class="panel-card">
             <div class="panel-card-header">
-                <h4>نظرة عامة</h4>
+                <h4>نظرة عامة على النظام</h4>
             </div>
             <div class="panel-card-body">
                 <p class="mb-0">
-                    هذه النسخة الحالية من لوحة التحكم جاهزة كنقطة انطلاق احترافية.
-                    في الخطوات القادمة سنربط التنبيهات بالشهر الهجري الحقيقي، ونمنع الزيارات للعقود المنتهية،
-                    ونضيف تحسينات أقوى لمطبوعات العقود والسجلات.
+                    مرحباً بك في منصة وقاية ✨  
+                    يمكنك إدارة العقود، متابعة الزيارات، إصدار الشهادات،
+                    وإنشاء عروض الأسعار بسهولة من لوحة تحكم واحدة.
                 </p>
             </div>
         </div>
     </div>
 
+    <!-- Quick Actions -->
     <div class="col-lg-4">
         <div class="panel-card">
             <div class="panel-card-header">
                 <h4>إجراءات سريعة</h4>
             </div>
             <div class="panel-card-body quick-actions">
-                <a href="{% url 'create_institution' %}" class="quick-action-btn">
-                    <i class="bi bi-building-add"></i>
-                    <span>إنشاء مؤسسة</span>
-                </a>
-                <a href="{% url 'edit_my_institution' %}" class="quick-action-btn">
-                    <i class="bi bi-pencil-square"></i>
-                    <span>تعديل المؤسسة</span>
-                </a>
+
                 <a href="{% url 'contracts_list' %}" class="quick-action-btn">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span>العقود</span>
+                    <i class="bi bi-plus-circle"></i>
+                    <span>إنشاء عقد</span>
                 </a>
+
                 <a href="{% url 'visit_list' %}" class="quick-action-btn">
-                    <i class="bi bi-calendar2-check"></i>
-                    <span>الزيارات</span>
+                    <i class="bi bi-calendar-plus"></i>
+                    <span>إضافة زيارة</span>
                 </a>
+
+                <a href="{% url 'certificate_list' %}" class="quick-action-btn">
+                    <i class="bi bi-patch-check"></i>
+                    <span>إصدار شهادة</span>
+                </a>
+
+                <a href="{% url 'quotation_list' %}" class="quick-action-btn">
+                    <i class="bi bi-receipt"></i>
+                    <span>عرض سعر</span>
+                </a>
+
             </div>
         </div>
     </div>
+
 </div>
+
 {% endblock %}
