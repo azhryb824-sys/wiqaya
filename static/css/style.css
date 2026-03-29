@@ -787,3 +787,34 @@ a {
         font-size: 1.15rem;
     }
 }
+.hero-sa {
+    padding: 100px 0;
+}
+
+.hero-title-sa {
+    font-size: 3rem;
+    font-weight: 800;
+}
+
+.hero-sub-sa {
+    color: #6b7280;
+    font-size: 1.2rem;
+    margin: 20px 0;
+}
+
+.features-sa {
+    padding: 60px 0;
+}
+
+.feature-sa {
+    padding: 20px;
+}
+
+.feature-sa i {
+    font-size: 40px;
+    color: #7a0f1d;
+}
+
+.cta-sa {
+    padding: 60px 0;
+}
