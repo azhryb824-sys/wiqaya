@@ -12,7 +12,7 @@ from contracts.models import MaintenanceContract
 from visits.models import Visit
 
 from .forms import ArabicLoginForm, CreateUserForm, InstitutionForm, RegisterForm
-from .models import LoginOTP, User
+from .models import User
 
 
 ARABIC_HIJRI_MONTHS = {
@@ -48,12 +48,6 @@ def format_hijri_date(gregorian_date):
     return f"{h_day} {month_name} {h_year}هـ"
 
 
-def send_login_otp(user, code):
-    # مؤقتاً يتم طباعة الرمز في التيرمنال
-    # لاحقاً نستبدله بإرسال فعلي عبر واتساب
-    print(f"LOGIN OTP for {user.username} / {user.phone}: {code}")
-
-
 class CustomLoginView(LoginView):
     template_name = "core/login.html"
     authentication_form = ArabicLoginForm
@@ -66,22 +60,9 @@ class CustomLoginView(LoginView):
             messages.error(self.request, "هذا الحساب غير مفعل")
             return self.form_invalid(form)
 
-        # حذف أي رموز قديمة غير مستخدمة
-        LoginOTP.objects.filter(user=user, is_used=False).delete()
-
-        code = LoginOTP.generate_code()
-        LoginOTP.objects.create(
-            user=user,
-            code=code,
-        )
-
-        send_login_otp(user, code)
-
-        self.request.session["pending_otp_user_id"] = user.id
-        self.request.session["pending_otp_username"] = user.username
-
-        messages.success(self.request, "تم التحقق من كلمة المرور، أدخل رمز التحقق المرسل إليك")
-        return redirect("verify_login_otp")
+        login(self.request, user)
+        messages.success(self.request, "تم تسجيل الدخول بنجاح")
+        return redirect("dashboard")
 
     def form_invalid(self, form):
         messages.error(self.request, "اسم المستخدم أو كلمة المرور غير صحيحة")
@@ -89,71 +70,6 @@ class CustomLoginView(LoginView):
 
     def get_success_url(self):
         return "/dashboard/"
-
-
-def verify_login_otp_view(request):
-    pending_user_id = request.session.get("pending_otp_user_id")
-
-    if not pending_user_id:
-        messages.error(request, "انتهت جلسة التحقق، سجل الدخول مرة أخرى")
-        return redirect("login")
-
-    user = get_object_or_404(User, id=pending_user_id)
-
-    if request.method == "POST":
-        code = (request.POST.get("code") or "").strip()
-
-        otp = LoginOTP.objects.filter(
-            user=user,
-            code=code,
-            is_used=False,
-        ).order_by("-id").first()
-
-        if not otp or not otp.is_valid():
-            messages.error(request, "رمز التحقق غير صحيح أو منتهي الصلاحية")
-            return redirect("verify_login_otp")
-
-        otp.is_used = True
-        otp.save(update_fields=["is_used"])
-
-        login(request, user)
-
-        request.session.pop("pending_otp_user_id", None)
-        request.session.pop("pending_otp_username", None)
-
-        messages.success(request, "تم تسجيل الدخول بنجاح")
-        return redirect("dashboard")
-
-    return render(
-        request,
-        "core/verify_login_otp.html",
-        {
-            "pending_username": request.session.get("pending_otp_username", ""),
-        },
-    )
-
-
-def resend_login_otp_view(request):
-    pending_user_id = request.session.get("pending_otp_user_id")
-
-    if not pending_user_id:
-        messages.error(request, "انتهت جلسة التحقق، سجل الدخول مرة أخرى")
-        return redirect("login")
-
-    user = get_object_or_404(User, id=pending_user_id)
-
-    LoginOTP.objects.filter(user=user, is_used=False).delete()
-
-    code = LoginOTP.generate_code()
-    LoginOTP.objects.create(
-        user=user,
-        code=code,
-    )
-
-    send_login_otp(user, code)
-
-    messages.success(request, "تم إرسال رمز تحقق جديد")
-    return redirect("verify_login_otp")
 
 
 def home_view(request):
