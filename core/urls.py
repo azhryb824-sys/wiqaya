@@ -8,8 +8,7 @@ urlpatterns = [
     # =========================
     path("", views.home_view, name="home"),
     path("login/", CustomLoginView.as_view(), name="login"),
-    path("verify-login-otp/", views.verify_login_otp_view, name="verify_login_otp"),
-    path("resend-login-otp/", views.resend_login_otp_view, name="resend_login_otp"),
+    
     path("register/", views.register_view, name="register"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
     path("logout/", views.logout_view, name="logout"),
