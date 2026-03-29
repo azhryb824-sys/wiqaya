@@ -818,3 +818,66 @@ a {
 .cta-sa {
     padding: 60px 0;
 }
+body {
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
+    text-align: right;
+}
+
+/* حل مشكلة النص المضغوط */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td, th {
+    padding: 12px;
+    line-height: 1.8;
+    vertical-align: middle;
+    word-break: break-word;
+    white-space: normal;
+}
+
+/* تحسين النص العربي */
+* {
+    letter-spacing: 0;
+    word-spacing: 2px;
+}
+
+/* تنسيق جدول عرض الأسعار */
+.quotation-table {
+    font-size: 15px;
+}
+
+.quotation-table td {
+    text-align: right;
+}
+
+/* العناوين */
+h1, h2, h3 {
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+/* تصميم رسمي مثل الشهادة 🔥 */
+.print-container {
+    background: #fff;
+    padding: 40px;
+    border: 1px solid #ddd;
+    max-width: 1000px;
+    margin: auto;
+}
+
+/* خط رسمي */
+.print-title {
+    text-align: center;
+    font-size: 32px;
+    color: #8B0000;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.print-subtitle {
+    text-align: center;
+    margin-bottom: 30px;
+}
