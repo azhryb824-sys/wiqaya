@@ -12,12 +12,18 @@
             اختر الآن طريقة الدفع المناسبة.
         </div>
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data" class="styled-form">
             {% csrf_token %}
 
             <div class="payment-methods">
                 <label class="payment-card">
-                    <input type="radio" name="payment_method" value="platform_card" required>
+                    <input
+                        type="radio"
+                        name="payment_method"
+                        value="platform_card"
+                        required
+                        {% if quotation.payment_method == "platform_card" %}checked{% endif %}
+                    >
                     <div>
                         <strong>الدفع عبر المنصة ببطاقة الصراف</strong>
                         <div class="text-muted small">سيتم لاحقاً ربطها ببوابة دفع إلكترونية</div>
@@ -25,15 +31,27 @@
                 </label>
 
                 <label class="payment-card">
-                    <input type="radio" name="payment_method" value="bank_transfer" required>
+                    <input
+                        type="radio"
+                        name="payment_method"
+                        value="bank_transfer"
+                        required
+                        {% if quotation.payment_method == "bank_transfer" %}checked{% endif %}
+                    >
                     <div>
-                        <strong>إرفاق إيصال التحويل</strong>
-                        <div class="text-muted small">سيتم لاحقاً إضافة رفع ملف الإيصال</div>
+                        <strong>التحويل البنكي</strong>
+                        <div class="text-muted small">يلزم إرفاق إيصال التحويل لإتمام الطلب</div>
                     </div>
                 </label>
 
                 <label class="payment-card">
-                    <input type="radio" name="payment_method" value="cash" required>
+                    <input
+                        type="radio"
+                        name="payment_method"
+                        value="cash"
+                        required
+                        {% if quotation.payment_method == "cash" %}checked{% endif %}
+                    >
                     <div>
                         <strong>الدفع نقداً</strong>
                         <div class="text-muted small">يتم السداد حسب الدفعات المحددة في العرض</div>
@@ -41,7 +59,29 @@
                 </label>
             </div>
 
-            <div class="mt-4">
+            <div id="transfer-receipt-box" class="transfer-receipt-box mt-4">
+                <label for="transfer_receipt" class="form-label">إيصال التحويل</label>
+                <input
+                    type="file"
+                    name="transfer_receipt"
+                    id="transfer_receipt"
+                    class="form-control"
+                    accept="image/*,.pdf"
+                >
+                <div class="form-text">
+                    أرفق صورة أو ملف PDF لإيصال التحويل البنكي.
+                </div>
+
+                {% if quotation.transfer_receipt %}
+                <div class="mt-3">
+                    <a href="{{ quotation.transfer_receipt.url }}" target="_blank" class="btn btn-outline-main btn-sm">
+                        عرض الإيصال المرفوع
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4 d-flex gap-2 flex-wrap">
                 <button type="submit" class="btn btn-main">حفظ طريقة الدفع</button>
                 <a href="{% url 'quotation_detail' quotation.id %}" class="btn btn-light">رجوع</a>
             </div>
@@ -64,12 +104,49 @@
     gap: 12px;
     cursor: pointer;
     background: #fff;
+    transition: 0.2s ease;
+}
+
+.payment-card:hover {
+    border-color: #7a0f1d;
+    box-shadow: 0 6px 18px rgba(122, 15, 29, 0.08);
 }
 
 .payment-card input {
     width: 18px;
     height: 18px;
     margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.transfer-receipt-box {
+    display: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 16px;
+    background: #fafafa;
 }
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+    const receiptBox = document.getElementById("transfer-receipt-box");
+
+    function toggleReceiptBox() {
+        const selected = document.querySelector('input[name="payment_method"]:checked');
+        if (selected && selected.value === "bank_transfer") {
+            receiptBox.style.display = "block";
+        } else {
+            receiptBox.style.display = "none";
+        }
+    }
+
+    paymentRadios.forEach(function (radio) {
+        radio.addEventListener("change", toggleReceiptBox);
+    });
+
+    toggleReceiptBox();
+});
+</script>
 {% endblock %}
