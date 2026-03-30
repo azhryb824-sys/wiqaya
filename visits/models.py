@@ -21,6 +21,26 @@ ARABIC_HIJRI_MONTHS = {
 }
 
 
+def format_hijri_date(date_obj):
+    if not date_obj:
+        return "-"
+    hijri = Gregorian(date_obj.year, date_obj.month, date_obj.day).to_hijri()
+    month_name = ARABIC_HIJRI_MONTHS.get(hijri.month, str(hijri.month))
+    return f"{hijri.day} {month_name} {hijri.year}هـ"
+
+
+def format_hijri_datetime(datetime_obj):
+    if not datetime_obj:
+        return "-"
+    hijri = Gregorian(
+        datetime_obj.year,
+        datetime_obj.month,
+        datetime_obj.day,
+    ).to_hijri()
+    month_name = ARABIC_HIJRI_MONTHS.get(hijri.month, str(hijri.month))
+    return f"{hijri.day} {month_name} {hijri.year}هـ"
+
+
 class Visit(models.Model):
     contract = models.ForeignKey(
         MaintenanceContract,
@@ -45,6 +65,14 @@ class Visit(models.Model):
         blank=True,
         null=True,
         verbose_name="الشهر الهجري",
+    )
+
+    extinguishers_expiry_hijri = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="تاريخ انتهاء الطفايات (هجري)",
+        help_text="مثال: 15 شوال 1447هـ",
     )
 
     notes = models.TextField(
@@ -101,6 +129,22 @@ class Visit(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def visit_date_hijri(self):
+        return format_hijri_date(self.visit_date)
+
+    @property
+    def technician_approved_at_hijri(self):
+        return format_hijri_datetime(self.technician_approved_at)
+
+    @property
+    def client_approved_at_hijri(self):
+        return format_hijri_datetime(self.client_approved_at)
+
+    @property
+    def created_at_hijri(self):
+        return format_hijri_datetime(self.created_at)
+
+    @property
     def status(self):
         if not self.technician_approved:
             return "بانتظار اعتماد الفني"
@@ -109,4 +153,4 @@ class Visit(models.Model):
         return "مكتملة"
 
     def __str__(self):
-        return f"{self.contract.contract_number} - {self.visit_date}"
+        return f"{self.contract.contract_number} - {self.visit_date_hijri}"
