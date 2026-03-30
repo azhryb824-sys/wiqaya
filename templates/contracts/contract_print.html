@@ -4,244 +4,246 @@
     <meta charset="UTF-8">
     <title>طباعة عقد الصيانة</title>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 22mm 18mm 20mm 18mm;
-        }
+       @page {
+    size: A4 portrait;
+    margin: 0;
+}
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            background: #ffffff;
-            color: #111;
-            font-family: "Cairo", Arial, sans-serif;
-            direction: rtl;
-            text-align: right;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #ececec;
+    font-family: "Cairo", Arial, sans-serif;
+    direction: rtl;
+    color: #111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
 
-        * {
-            box-sizing: border-box;
-            box-shadow: none !important;
-            text-shadow: none !important;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        body {
-            font-size: 15px;
-            line-height: 2;
-        }
+/* ===================== A4 ===================== */
+.a4-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+}
 
-        .page {
-            width: 100%;
-        }
+.page {
+    width: 210mm;
+    min-height: 297mm;
+    background: #fff;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.10);
+}
 
-        .letterhead {
-            border-bottom: 3px solid #7a0f1d;
-            padding-bottom: 12px;
-            margin-bottom: 22px;
-        }
+.page-inner {
+    padding: 24mm 18mm 18mm;
+}
 
-        .letterhead-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+/* ===================== HEADER ===================== */
+.letterhead {
+    position: relative;
+    padding-bottom: 18px;
+    margin-bottom: 26px;
+    border-bottom: 3px solid #7a0f1d;
+}
 
-        .letterhead-table td {
-            vertical-align: middle;
-            border: none;
-            padding: 0;
-        }
+.letterhead::after {
+    content: "";
+    position: absolute;
+    bottom: -3px;
+    right: 0;
+    width: 90px;
+    height: 3px;
+    background: #b58a4b;
+}
 
-        .lh-right {
-            width: 30%;
-            text-align: right;
-        }
+.header-grid {
+    display: table;
+    width: 100%;
+}
 
-        .lh-center {
-            width: 18%;
-            text-align: center;
-        }
+.header-cell {
+    display: table-cell;
+    vertical-align: middle;
+}
 
-        .lh-left {
-            width: 52%;
-            text-align: left;
-        }
+.header-right {
+    width: 30%;
+    text-align: right;
+}
 
-        .platform-title {
-            margin: 0;
-            color: #7a0f1d;
-            font-size: 30px;
-            font-weight: 800;
-            line-height: 1.2;
-        }
+.header-center {
+    width: 15%;
+    text-align: center;
+}
 
-        .platform-subtitle {
-            margin: 6px 0 0 0;
-            color: #666;
-            font-size: 13px;
-            line-height: 1.7;
-        }
+.header-left {
+    width: 55%;
+    text-align: left;
+}
 
-        .institution-info {
-            margin: 0;
-            font-size: 13px;
-            line-height: 1.9;
-            color: #222;
-        }
+.platform-title {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 800;
+    color: #7a0f1d;
+}
 
-        .logo-box {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 82px;
-            height: 82px;
-            border: 2px solid #7a0f1d;
-            border-radius: 18px;
-            color: #7a0f1d;
-            font-size: 20px;
-            font-weight: 800;
-        }
+.platform-subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+}
 
-        .doc-title {
-            text-align: center;
-            font-size: 24px;
-            font-weight: 800;
-            margin: 0 0 22px 0;
-            text-decoration: underline;
-            text-underline-offset: 6px;
-        }
+.institution-name {
+    font-size: 15px;
+    font-weight: 700;
+}
 
-        .contract-body {
-            width: 100%;
-        }
+.institution-meta {
+    font-size: 13px;
+    color: #555;
+}
 
-        .paragraph {
-            margin-bottom: 12px;
-            text-align: justify;
-        }
+/* الشعار */
+.logo-badge {
+    width: 75px;
+    height: 75px;
+    border: 2px solid #7a0f1d;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #7a0f1d;
+}
 
-        .section-title {
-            font-weight: 800;
-            margin: 22px 0 10px 0;
-        }
+/* ===================== TITLE ===================== */
+.doc-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #000;
+    display: inline-block;
+    padding-bottom: 5px;
+}
 
-        .clauses {
-            margin: 0;
-            padding-right: 24px;
-        }
+/* ===================== CONTENT ===================== */
+.contract-body {
+    font-size: 15px;
+    line-height: 2;
+}
 
-        .clauses li {
-            margin-bottom: 10px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
+.paragraph {
+    margin-bottom: 12px;
+    text-align: justify;
+}
 
-        .clauses li strong {
-            font-weight: 800;
-        }
+.section-title {
+    margin: 20px 0 10px;
+    font-weight: 800;
+    color: #7a0f1d;
+}
 
-        .contract-meta {
-            margin-bottom: 12px;
-        }
+/* ===================== CLAUSES ===================== */
+.clauses-box {
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fafafa;
+}
 
-        .contract-meta strong,
-        .paragraph strong {
-            font-weight: 800;
-        }
+.clauses {
+    padding-right: 20px;
+}
 
-        .signature-block {
-            margin-top: 55px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
+.clauses li {
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+}
 
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+/* ===================== QR ===================== */
+.qr-wrapper {
+    margin-top: 15px;
+    text-align: left;
+}
 
-        .signature-table td {
-            width: 50%;
-            vertical-align: top;
-            text-align: center;
-            border: none;
-            padding: 0 12px;
-        }
+.qr-wrapper img {
+    width: 80px;
+}
 
-        .sig-heading {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
+/* ===================== SIGNATURE ===================== */
+.signature-block {
+    margin-top: 50px;
+}
 
-        .sig-name {
-            font-size: 17px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            line-height: 1.8;
-        }
+.signature-table {
+    width: 100%;
+}
 
-        .sig-label {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 22px;
-        }
+.signature-table td {
+    width: 50%;
+    text-align: center;
+}
 
-        .approval-note {
-            font-size: 15px;
-            font-weight: 700;
-            color: #0f5132;
-            margin-top: 14px;
-        }
+.sign-card {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 20px;
+    min-height: 200px;
+}
 
-        .signature-image,
-        .stamp-image {
-            display: block;
-            margin: 12px auto 0;
-            object-fit: contain;
-        }
+.sig-heading {
+    font-size: 18px;
+    font-weight: 800;
+    color: #7a0f1d;
+}
 
-        .signature-image {
-            max-width: 150px;
-            max-height: 80px;
-        }
+.sig-name {
+    font-weight: 700;
+    margin: 15px 0;
+}
 
-        .stamp-image {
-            max-width: 120px;
-            max-height: 120px;
-        }
+.sig-label {
+    margin-top: 20px;
+    font-weight: 700;
+}
 
-        .qr-wrapper {
-            margin-top: 18px;
-            text-align: left;
-        }
+.signature-image {
+    max-width: 130px;
+}
 
-        .qr-wrapper img {
-            width: 90px;
-            height: 90px;
-            object-fit: contain;
-        }
+.stamp-image {
+    max-width: 100px;
+}
 
-        .footer-note {
-            margin-top: 24px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 11px;
-            color: #666;
-        }
+/* ===================== FOOTER ===================== */
+.footer-note {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 11px;
+    color: #777;
+}
 
-        .avoid-break {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
+/* ===================== PRINT ===================== */
+@media print {
+    body {
+        background: white;
+    }
 
-        @media print {
-            html, body {
-                background: #fff;
-            }
-        }
+    .a4-wrapper {
+        padding: 0;
+    }
+
+    .page {
+        box-shadow: none;
+        width: 100%;
+    }
+}
     </style>
 </head>
 <body>
