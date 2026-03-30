@@ -62,8 +62,19 @@ def contract_list_view(request):
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
         return redirect("create_institution")
 
-    contracts = MaintenanceContract.objects.filter(institution=institution)
-    return render(request, "contracts/contract_list.html", {"contracts": contracts})
+    contracts = MaintenanceContract.objects.filter(institution=institution).select_related(
+        "client",
+        "institution",
+        "executive",
+    )
+    return render(
+        request,
+        "contracts/contract_list.html",
+        {
+            "contracts": contracts,
+            "user_type_label": "العقود",
+        },
+    )
 
 
 @login_required
@@ -96,7 +107,7 @@ def contract_create_view(request):
 
             contract.save()
 
-            selected_templates = form.cleaned_data.get("clause_templates")
+            selected_templates = form.cleaned_data.get("clause_templates") or []
             for template in selected_templates:
                 MaintenanceContractClause.objects.create(
                     contract=contract,
@@ -125,10 +136,18 @@ def contract_create_view(request):
 def contract_detail_view(request, contract_id):
     institution = request.user.institutions.first()
 
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
+
     contract = get_object_or_404(
-        MaintenanceContract,
+        MaintenanceContract.objects.select_related(
+            "client",
+            "institution",
+            "executive",
+        ),
         id=contract_id,
-        institution=institution
+        institution=institution,
     )
     return render(
         request,
@@ -144,8 +163,16 @@ def contract_detail_view(request, contract_id):
 def contract_print_view(request, contract_id):
     institution = request.user.institutions.first()
 
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
+
     contract = get_object_or_404(
-        MaintenanceContract,
+        MaintenanceContract.objects.select_related(
+            "client",
+            "institution",
+            "executive",
+        ),
         id=contract_id,
         institution=institution
     )
@@ -155,8 +182,8 @@ def contract_print_view(request, contract_id):
     context = {
         "contract": contract,
         "created_at_hijri": format_hijri(contract.created_at.date()),
-        "start_date_hijri": format_hijri(contract.start_date),
-        "end_date_hijri": format_hijri(contract.end_date),
+        "start_date_hijri": contract.start_date_hijri or format_hijri(contract.start_date),
+        "end_date_hijri": contract.end_date_hijri or format_hijri(contract.end_date),
         "building_location_qr": qr_code,
     }
     return render(request, "contracts/contract_print.html", context)
@@ -170,7 +197,7 @@ def clause_template_list_view(request):
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
         return redirect("create_institution")
 
-    templates = ContractClauseTemplate.objects.filter(institution=institution)
+    templates = ContractClauseTemplate.objects.filter(institution=institution).order_by("order", "id")
     return render(
         request,
         "contracts/clause_template_list.html",
@@ -210,9 +237,15 @@ def clause_template_create_view(request):
             "user_type_label": "العقود",
         },
     )
+
+
 @login_required
 def contract_edit_view(request, contract_id):
     institution = request.user.institutions.first()
+
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
 
     contract = get_object_or_404(
         MaintenanceContract,
@@ -231,13 +264,44 @@ def contract_edit_view(request, contract_id):
             contract = form.save(commit=False)
             contract.institution = institution
             contract.executive = request.user
+
+            client = form.cleaned_data.get("client")
+            client_identifier = form.cleaned_data.get("client_identifier")
+
+            if not client and client_identifier:
+                client = institution.users.filter(
+                    user_type="client",
+                    national_id=client_identifier
+                ).first()
+
+            contract.client = client if client else None
             contract.save()
+
+            selected_templates = form.cleaned_data.get("clause_templates") or []
+
+            contract.clauses.all().delete()
+            for template in selected_templates:
+                MaintenanceContractClause.objects.create(
+                    contract=contract,
+                    title=template.title,
+                    content=template.content,
+                    order=template.order,
+                )
 
             messages.success(request, "تم تعديل العقد بنجاح")
             return redirect("contract_detail", contract_id=contract.id)
 
         print(form.errors)
-        messages.error(request, "تعذر تعديل العقد")
+        messages.error(request, "تعذر تعديل العقد، راجع الأخطاء الظاهرة في النموذج")
+
+    else:
+        existing_template_ids = contract.clauses.values_list("title", flat=True)
+        initial_templates = ContractClauseTemplate.objects.filter(
+            institution=institution,
+            title__in=existing_template_ids,
+            is_active=True,
+        )
+        form.fields["clause_templates"].initial = initial_templates
 
     return render(
         request,
@@ -246,11 +310,18 @@ def contract_edit_view(request, contract_id):
             "form": form,
             "is_edit": True,
             "contract": contract,
+            "user_type_label": "العقود",
         },
     )
+
+
 @login_required
 def contract_delete_view(request, contract_id):
     institution = request.user.institutions.first()
+
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
 
     contract = get_object_or_404(
         MaintenanceContract,
