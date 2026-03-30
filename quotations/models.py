@@ -1,7 +1,7 @@
 from decimal import Decimal
 
-from django.db import models
 from django.conf import settings
+from django.db import models
 from num2words import num2words
 
 User = settings.AUTH_USER_MODEL
@@ -140,6 +140,7 @@ class PriceQuotation(models.Model):
     )
 
     class Meta:
+        ordering = ["-id"]
         verbose_name = "عرض سعر"
         verbose_name_plural = "عروض الأسعار"
 
@@ -166,14 +167,19 @@ class PriceQuotation(models.Model):
         if not self.execution_days:
             return ""
 
-        first_installment = self.installments.order_by("id").first()
+        first_installment = self.installments.order_by("order", "id").first()
 
         if first_installment and first_installment.title:
             return f"{self.execution_days} يوم عمل من تاريخ استلام الدفعة / {first_installment.title}"
 
         return f"{self.execution_days} يوم عمل من تاريخ استلام الدفعة الأولى"
 
-    def calculate_totals(self):
+    def update_installments_amounts(self):
+        installments = self.installments.all()
+        for installment in installments:
+            installment.save()
+
+    def calculate_totals(self, save=True):
         subtotal = sum(
             (item.total_price or Decimal("0.00")) for item in self.items.all()
         )
@@ -186,15 +192,21 @@ class PriceQuotation(models.Model):
         self.grand_total_words = self.amount_to_arabic_words()
         self.execution_period = self.build_execution_period_text()
 
-        self.save(
-            update_fields=[
-                "subtotal",
-                "vat_amount",
-                "grand_total",
-                "grand_total_words",
-                "execution_period",
-            ]
-        )
+        if save and self.pk:
+            self.save(
+                update_fields=[
+                    "subtotal",
+                    "vat_amount",
+                    "grand_total",
+                    "grand_total_words",
+                    "execution_period",
+                ]
+            )
+            self.update_installments_amounts()
+
+    @property
+    def items_count(self):
+        return self.items.count()
 
 
 class PriceQuotationItem(models.Model):
@@ -229,14 +241,30 @@ class PriceQuotationItem(models.Model):
 
     order = models.PositiveIntegerField(
         default=0,
+        verbose_name="الترتيب",
     )
 
     class Meta:
-        ordering = ["order"]
+        ordering = ["order", "id"]
+        verbose_name = "بند عرض سعر"
+        verbose_name_plural = "بنود عروض الأسعار"
+
+    def __str__(self):
+        return f"{self.quotation.quotation_number} - {self.description[:50]}"
 
     def save(self, *args, **kwargs):
         self.total_price = (Decimal(self.quantity) * self.unit_price).quantize(Decimal("0.01"))
         super().save(*args, **kwargs)
+
+        if self.quotation_id:
+            self.quotation.calculate_totals()
+
+    def delete(self, *args, **kwargs):
+        quotation = self.quotation
+        super().delete(*args, **kwargs)
+
+        if quotation:
+            quotation.calculate_totals()
 
 
 class PriceQuotationInstallment(models.Model):
@@ -271,9 +299,23 @@ class PriceQuotationInstallment(models.Model):
         verbose_name="موعد الدفع",
     )
 
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name="الترتيب",
+    )
+
     is_paid = models.BooleanField(
         default=False,
+        verbose_name="تم السداد",
     )
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "دفعة عرض سعر"
+        verbose_name_plural = "دفعات عروض الأسعار"
+
+    def __str__(self):
+        return f"{self.quotation.quotation_number} - {self.title}"
 
     def save(self, *args, **kwargs):
         if self.quotation and self.quotation.grand_total is not None:
