@@ -9,6 +9,8 @@ urlpatterns = [
     path("<int:contract_id>/print/", views.contract_print_view, name="contract_print"),
     path("<int:contract_id>/delete/", views.contract_delete_view, name="contract_delete"),
 
+    path("<int:contract_id>/decision/", views.contract_client_decision_view, name="contract_client_decision"),
+
     path("clauses/", views.clause_template_list_view, name="clause_template_list"),
     path("clauses/create/", views.clause_template_create_view, name="clause_template_create"),
 ]
