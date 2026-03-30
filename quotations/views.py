@@ -248,7 +248,7 @@ def quotation_create_view(request):
         installment_formset=installment_formset,
         page_title="إنشاء عرض سعر",
     )
-لماذا هذا التعديل يحل المشكلة
+
 
 @login_required
 def quotation_detail_view(request, quotation_id):
