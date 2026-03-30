@@ -9,7 +9,51 @@
     <div class="panel-card-body">
         <form method="post" class="styled-form">
             {% csrf_token %}
-            {{ form.as_p }}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="{{ form.contract.id_for_label }}">
+                        {{ form.contract.label }}
+                    </label>
+                    {{ form.contract }}
+                    {% if form.contract.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.contract.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="{{ form.technician.id_for_label }}">
+                        {{ form.technician.label }}
+                    </label>
+                    {{ form.technician }}
+                    {% if form.technician.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.technician.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="{{ form.visit_date.id_for_label }}">
+                        {{ form.visit_date.label }}
+                    </label>
+                    {{ form.visit_date }}
+                    {% if form.visit_date.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.visit_date.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-main">حفظ الزيارة</button>
         </form>
     </div>
