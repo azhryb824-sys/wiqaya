@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import (
     PriceQuotationForm,
@@ -153,11 +154,9 @@ def quotation_create_view(request):
                 percentage = inst_form.cleaned_data.get("percentage")
                 due_description = (inst_form.cleaned_data.get("due_description") or "").strip()
 
-                # تجاهل الصف الفارغ بالكامل
                 if not title and percentage in [None, ""] and not due_description:
                     continue
 
-                # لو بدأ المستخدم يعبّي دفعة، لازم يكملها
                 if not title or percentage is None or not due_description:
                     messages.error(request, "يجب تعبئة جميع بيانات الدفعة أو حذف الصف الفارغ")
                     return _render_quotation_form(
@@ -205,7 +204,6 @@ def quotation_create_view(request):
             messages.success(request, "تم إنشاء عرض السعر بنجاح")
             return redirect("quotation_detail", quotation_id=quotation.id)
 
-        # إظهار الأخطاء الحقيقية بدل الرسالة العامة فقط
         if form.errors:
             for field_name, errors in form.errors.items():
                 label = form.fields[field_name].label if field_name in form.fields else field_name
@@ -379,6 +377,7 @@ def quotation_payment_choice_view(request, quotation_id):
 
     if request.method == "POST":
         payment_method = request.POST.get("payment_method")
+        transfer_receipt = request.FILES.get("transfer_receipt")
 
         if payment_method not in ["platform_card", "bank_transfer", "cash"]:
             messages.error(request, "الرجاء اختيار طريقة دفع صحيحة")
@@ -391,8 +390,29 @@ def quotation_payment_choice_view(request, quotation_id):
                 },
             )
 
+        if payment_method == "bank_transfer" and not transfer_receipt and not getattr(quotation, "transfer_receipt", None):
+            messages.error(request, "يرجى إرفاق إيصال التحويل عند اختيار التحويل البنكي")
+            return render(
+                request,
+                "quotations/quotation_payment_choice.html",
+                {
+                    "quotation": quotation,
+                    "user_type_label": "عروض الأسعار",
+                },
+            )
+
         quotation.payment_method = payment_method
-        quotation.save(update_fields=["payment_method"])
+        update_fields = ["payment_method"]
+
+        if payment_method == "bank_transfer" and transfer_receipt:
+            quotation.transfer_receipt = transfer_receipt
+            update_fields.append("transfer_receipt")
+
+            if hasattr(quotation, "payment_proof_uploaded_at"):
+                quotation.payment_proof_uploaded_at = timezone.now()
+                update_fields.append("payment_proof_uploaded_at")
+
+        quotation.save(update_fields=update_fields)
 
         messages.success(request, "تم حفظ طريقة الدفع بنجاح")
         return redirect("quotation_detail", quotation_id=quotation.id)
