@@ -8,32 +8,115 @@
 <div class="panel-card mb-4">
     <div class="panel-card-body">
         <div class="top-actions mb-4">
-            <a href="{% url 'quotation_print' quotation.id %}" class="btn btn-main">طباعة العرض</a>
+            <a href="{% url 'quotation_print' quotation.id %}" class="btn btn-main">
+                طباعة العرض
+            </a>
 
-            {% if request.user.user_type == "client" and quotation.status == "sent" or request.user.user_type == "client" and quotation.status == "draft" %}
-            <a href="{% url 'quotation_client_decision' quotation.id %}" class="btn btn-outline-success">قبول / رفض</a>
+            {% if request.user.user_type == "client" and quotation.status in "sent draft"|split %}
+            <a href="{% url 'quotation_client_decision' quotation.id %}" class="btn btn-outline-success">
+                قبول / رفض
+            </a>
             {% endif %}
 
             {% if request.user.user_type == "client" and quotation.status == "accepted" and not quotation.payment_method %}
-            <a href="{% url 'quotation_payment_choice' quotation.id %}" class="btn btn-outline-warning">اختيار طريقة الدفع</a>
+            <a href="{% url 'quotation_payment_choice' quotation.id %}" class="btn btn-outline-warning">
+                اختيار طريقة الدفع
+            </a>
             {% endif %}
         </div>
 
         <div class="detail-grid">
-            <div class="detail-item"><strong>رقم عرض السعر:</strong> {{ quotation.quotation_number }}</div>
-            <div class="detail-item"><strong>الحالة:</strong> {{ quotation.get_status_display }}</div>
-            <div class="detail-item"><strong>مؤسسة العميل:</strong> {{ quotation.client_display_name }}</div>
-            <div class="detail-item"><strong>اسم المبنى:</strong> {{ quotation.building_name }}</div>
-            <div class="detail-item full"><strong>موقع المبنى:</strong> {{ quotation.building_location }}</div>
-            <div class="detail-item"><strong>المجموع:</strong> {{ quotation.subtotal }} ريال</div>
-            <div class="detail-item"><strong>الضريبة 15%:</strong> {{ quotation.vat_amount }} ريال</div>
-            <div class="detail-item"><strong>الإجمالي:</strong> {{ quotation.grand_total }} ريال</div>
-            <div class="detail-item"><strong>طريقة الدفع المختارة:</strong> {{ quotation.get_payment_method_display|default:"-" }}</div>
-            <div class="detail-item full"><strong>المبلغ كتابة:</strong> {{ quotation.grand_total_words|default:"-" }}</div>
-            <div class="detail-item full"><strong>طريقة الدفع / الدفعات:</strong><br>{{ quotation.payment_terms|linebreaksbr }}</div>
-            <div class="detail-item"><strong>مدة التنفيذ:</strong> {{ quotation.execution_period }}</div>
-            <div class="detail-item"><strong>رقم حساب المؤسسة:</strong> {{ quotation.institution_account_number }}</div>
-            <div class="detail-item full"><strong>ملاحظة العميل:</strong> {{ quotation.client_decision_note|default:"-" }}</div>
+            <div class="detail-item">
+                <strong>رقم عرض السعر:</strong>
+                <div>{{ quotation.quotation_number }}</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>الحالة:</strong>
+                <div>{{ quotation.get_status_display }}</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>مؤسسة العميل:</strong>
+                <div>{{ quotation.client_display_name }}</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>اسم المبنى:</strong>
+                <div>{{ quotation.building_name }}</div>
+            </div>
+
+            <div class="detail-item full">
+                <strong>موقع المبنى:</strong>
+                <div>{{ quotation.building_location }}</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>المجموع:</strong>
+                <div>{{ quotation.subtotal }} ريال</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>الضريبة 15%:</strong>
+                <div>{{ quotation.vat_amount }} ريال</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>الإجمالي:</strong>
+                <div>{{ quotation.grand_total }} ريال</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>طريقة الدفع المختارة:</strong>
+                <div>{{ quotation.get_payment_method_display|default:"-" }}</div>
+            </div>
+
+            <div class="detail-item full">
+                <strong>المبلغ كتابة:</strong>
+                <div>{{ quotation.grand_total_words|default:"-" }}</div>
+            </div>
+
+            <div class="detail-item full">
+                <strong>طريقة الدفع / الدفعات:</strong>
+                <div>{{ quotation.payment_terms|linebreaksbr }}</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>مدة التنفيذ:</strong>
+                <div>{{ quotation.execution_period|default:"-" }}</div>
+            </div>
+
+            <div class="detail-item">
+                <strong>رقم حساب المؤسسة:</strong>
+                <div>{{ quotation.institution_account_number }}</div>
+            </div>
+
+            <div class="detail-item full">
+                <strong>ملاحظة العميل:</strong>
+                <div>{{ quotation.client_decision_note|default:"-" }}</div>
+            </div>
+
+            {% if quotation.payment_method == "bank_transfer" %}
+            <div class="detail-item full receipt-card">
+                <strong>إيصال التحويل:</strong>
+
+                {% if quotation.transfer_receipt %}
+                    <div class="mt-2 d-flex gap-2 flex-wrap">
+                        <a href="{{ quotation.transfer_receipt.url }}" target="_blank" class="btn btn-outline-main btn-sm">
+                            عرض الإيصال
+                        </a>
+
+                        {% if quotation.payment_proof_uploaded_at %}
+                        <span class="receipt-meta">
+                            تم الرفع بتاريخ: {{ quotation.payment_proof_uploaded_at }}
+                        </span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-muted mt-2">لم يتم رفع إيصال التحويل بعد.</div>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -127,6 +210,21 @@
 
 .detail-item.full {
     grid-column: 1 / -1;
+}
+
+.receipt-card {
+    background: #fcfcff;
+    border-color: #d8def0;
+}
+
+.receipt-meta {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #f5f7fb;
+    color: #4b5563;
+    font-size: 13px;
 }
 
 .section-title {
