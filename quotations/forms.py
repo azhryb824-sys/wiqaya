@@ -202,12 +202,11 @@ class BasePriceQuotationItemFormSet(BaseInlineFormSet):
 class PriceQuotationInstallmentForm(forms.ModelForm):
     class Meta:
         model = PriceQuotationInstallment
-        fields = ["title", "percentage", "due_description", "order"]
+        fields = ["title", "percentage", "due_description"]
         labels = {
             "title": "اسم الدفعة",
             "percentage": "النسبة %",
             "due_description": "موعد الدفع",
-            "order": "الترتيب",
         }
         widgets = {
             "title": forms.TextInput(
@@ -227,12 +226,6 @@ class PriceQuotationInstallmentForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "مثال: عند التعميد",
-                }
-            ),
-            "order": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "min": "0",
                 }
             ),
         }
