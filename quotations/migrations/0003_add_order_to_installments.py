@@ -4,8 +4,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("quotations", "0002_initial"),
-    ]
+    ("quotations", "0002_pricequotation_execution_days_and_more"),
+]
 
     operations = [
         migrations.AddField(
