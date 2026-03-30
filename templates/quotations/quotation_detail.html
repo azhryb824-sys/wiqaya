@@ -12,7 +12,7 @@
                 طباعة العرض
             </a>
 
-            {% if request.user.user_type == "client" and quotation.status in "sent draft"|split %}
+            {% if request.user.user_type == "client" and quotation.status == "sent" or request.user.user_type == "client" and quotation.status == "draft" %}
             <a href="{% url 'quotation_client_decision' quotation.id %}" class="btn btn-outline-success">
                 قبول / رفض
             </a>
