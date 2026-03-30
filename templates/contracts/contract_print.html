@@ -6,15 +6,15 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 0;
+            margin: 16mm 14mm 16mm 14mm;
         }
 
         html, body {
             margin: 0;
             padding: 0;
-            background: #ececec;
             font-family: "Cairo", Arial, sans-serif;
             direction: rtl;
+            background: #ececec;
             color: #111;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
@@ -24,27 +24,64 @@
             box-sizing: border-box;
         }
 
+        body {
+            font-size: 15px;
+            line-height: 2;
+        }
+
+        .screen-toolbar {
+            width: 210mm;
+            margin: 18px auto 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .print-btn,
+        .back-btn {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .print-btn {
+            background: #7a0f1d;
+            color: #fff;
+        }
+
+        .back-btn {
+            background: #fff;
+            color: #222;
+            border: 1px solid #ddd;
+        }
+
         .a4-wrapper {
             display: flex;
             justify-content: center;
-            padding: 24px 0;
+            padding: 16px 0 28px;
         }
 
         .page {
             width: 210mm;
-            min-height: 297mm;
             background: #fff;
             box-shadow: 0 0 24px rgba(0, 0, 0, 0.10);
         }
 
         .page-inner {
-            padding: 18mm 18mm 16mm;
+            padding: 18mm 16mm 14mm;
         }
 
-        /* ===== الهيدر ===== */
+        /* ===== Header ===== */
         .letterhead {
             position: relative;
-            margin-bottom: 26px;
+            margin-bottom: 24px;
             padding-bottom: 14px;
             border-bottom: 2px solid #7a0f1d;
         }
@@ -124,7 +161,7 @@
             line-height: 1.7;
         }
 
-        /* ===== عنوان العقد ===== */
+        /* ===== Title ===== */
         .doc-title-wrap {
             text-align: center;
             margin-bottom: 22px;
@@ -140,10 +177,10 @@
             color: #111;
         }
 
-        /* ===== جسم العقد ===== */
+        /* ===== Body ===== */
         .contract-body {
             font-size: 15px;
-            line-height: 2.15;
+            line-height: 2.1;
         }
 
         .paragraph {
@@ -192,8 +229,8 @@
 
         .clauses li {
             margin-bottom: 10px;
-            page-break-inside: avoid;
             break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .clauses li strong {
@@ -215,11 +252,11 @@
             background: #fff;
         }
 
-        /* ===== التوقيعات ===== */
+        /* ===== Signatures ===== */
         .signature-block {
-            margin-top: 48px;
-            page-break-inside: avoid;
+            margin-top: 42px;
             break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .signature-table {
@@ -287,7 +324,6 @@
             max-height: 110px;
         }
 
-        /* ===== الفوتر ===== */
         .footer-note {
             margin-top: 24px;
             padding-top: 10px;
@@ -302,19 +338,32 @@
                 background: #fff;
             }
 
+            .screen-toolbar {
+                display: none !important;
+            }
+
             .a4-wrapper {
                 padding: 0;
             }
 
             .page {
                 width: 100%;
-                min-height: auto;
                 box-shadow: none;
+            }
+
+            .page-inner {
+                padding: 0;
             }
         }
     </style>
 </head>
 <body>
+
+    <div class="screen-toolbar">
+        <a href="{% url 'contract_detail' contract.id %}" class="back-btn">رجوع</a>
+        <button type="button" class="print-btn" onclick="window.print()">طباعة العقد</button>
+    </div>
+
     <div class="a4-wrapper">
         <div class="page">
             <div class="page-inner">
