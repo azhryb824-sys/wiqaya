@@ -11,14 +11,24 @@ class VisitForm(forms.ModelForm):
             "contract",
             "technician",
             "visit_date",
-            "month_label",
+            "extinguishers_expiry_hijri",
             "notes",
         ]
+        labels = {
+            "contract": "العقد",
+            "technician": "الفني",
+            "visit_date": "تاريخ الزيارة",
+            "extinguishers_expiry_hijri": "تاريخ انتهاء الطفايات (هجري)",
+            "notes": "ملاحظات الفني",
+        }
         widgets = {
             "contract": forms.Select(attrs={"class": "form-select"}),
             "technician": forms.Select(attrs={"class": "form-select"}),
             "visit_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-            "month_label": forms.TextInput(attrs={"class": "form-control"}),
+            "extinguishers_expiry_hijri": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "مثال: 15 شوال 1447هـ",
+            }),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
 
@@ -33,11 +43,33 @@ class VisitForm(forms.ModelForm):
             self.fields["contract"].queryset = MaintenanceContract.objects.none()
             self.fields["technician"].queryset = User.objects.filter(user_type="technician")
 
+        self.fields["extinguishers_expiry_hijri"].required = False
+        self.fields["notes"].required = False
+
+    def clean_extinguishers_expiry_hijri(self):
+        value = (self.cleaned_data.get("extinguishers_expiry_hijri") or "").strip()
+        return value
+
 
 class VisitNoteForm(forms.ModelForm):
     class Meta:
         model = Visit
-        fields = ["notes"]
+        fields = [
+            "notes",
+            "extinguishers_expiry_hijri",
+        ]
+        labels = {
+            "notes": "ملاحظات الفني",
+            "extinguishers_expiry_hijri": "تاريخ انتهاء الطفايات (هجري)",
+        }
         widgets = {
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "extinguishers_expiry_hijri": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "مثال: 15 شوال 1447هـ",
+            }),
         }
+
+    def clean_extinguishers_expiry_hijri(self):
+        value = (self.cleaned_data.get("extinguishers_expiry_hijri") or "").strip()
+        return value
