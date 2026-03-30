@@ -11,25 +11,16 @@ class VisitForm(forms.ModelForm):
             "contract",
             "technician",
             "visit_date",
-            "extinguishers_expiry_hijri",
-            "notes",
         ]
         labels = {
             "contract": "العقد",
             "technician": "الفني",
             "visit_date": "تاريخ الزيارة",
-            "extinguishers_expiry_hijri": "تاريخ انتهاء الطفايات (هجري)",
-            "notes": "ملاحظات الفني",
         }
         widgets = {
             "contract": forms.Select(attrs={"class": "form-select"}),
             "technician": forms.Select(attrs={"class": "form-select"}),
             "visit_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-            "extinguishers_expiry_hijri": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "مثال: 15 شوال 1447هـ",
-            }),
-            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -42,13 +33,6 @@ class VisitForm(forms.ModelForm):
         else:
             self.fields["contract"].queryset = MaintenanceContract.objects.none()
             self.fields["technician"].queryset = User.objects.filter(user_type="technician")
-
-        self.fields["extinguishers_expiry_hijri"].required = False
-        self.fields["notes"].required = False
-
-    def clean_extinguishers_expiry_hijri(self):
-        value = (self.cleaned_data.get("extinguishers_expiry_hijri") or "").strip()
-        return value
 
 
 class VisitNoteForm(forms.ModelForm):
