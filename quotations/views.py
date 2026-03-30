@@ -26,6 +26,29 @@ def _can_access_quotation(user, quotation):
     return False
 
 
+def _render_quotation_form(
+    request,
+    *,
+    form,
+    item_formset,
+    installment_formset,
+    page_title,
+):
+    return render(
+        request,
+        "quotations/quotation_form.html",
+        {
+            "form": form,
+            "item_formset": item_formset,
+            "installment_formset": installment_formset,
+            "item_empty_form": item_formset.empty_form,
+            "installment_empty_form": installment_formset.empty_form,
+            "page_title": page_title,
+            "user_type_label": "عروض الأسعار",
+        },
+    )
+
+
 @login_required
 def quotation_list_view(request):
     if request.user.user_type == "client":
@@ -39,6 +62,7 @@ def quotation_list_view(request):
             "items",
             "installments",
         ).order_by("-id")
+
     elif request.user.user_type in ["executive", "admin_assistant"]:
         institution = _get_user_institution(request.user)
         if not institution:
@@ -55,6 +79,7 @@ def quotation_list_view(request):
             "items",
             "installments",
         ).order_by("-id")
+
     else:
         messages.error(request, "غير مصرح لك بالدخول لهذه الصفحة")
         return redirect("dashboard")
@@ -89,49 +114,45 @@ def quotation_create_view(request):
         installment_formset = PriceQuotationInstallmentFormSet(request.POST, prefix="installments")
 
         if form.is_valid() and item_formset.is_valid() and installment_formset.is_valid():
-            valid_items = [
-                item_form
-                for item_form in item_formset
-                if item_form.cleaned_data and not item_form.cleaned_data.get("DELETE", False)
-            ]
+            valid_items = []
+            for item_form in item_formset:
+                if not hasattr(item_form, "cleaned_data") or not item_form.cleaned_data:
+                    continue
+                if item_form.cleaned_data.get("DELETE", False):
+                    continue
+                valid_items.append(item_form)
 
             if not valid_items:
                 messages.error(request, "يجب إضافة بند واحد على الأقل في عرض السعر")
-                return render(
+                return _render_quotation_form(
                     request,
-                    "quotations/quotation_form.html",
-                    {
-                        "form": form,
-                        "item_formset": item_formset,
-                        "installment_formset": installment_formset,
-                        "page_title": "إنشاء عرض سعر",
-                        "user_type_label": "عروض الأسعار",
-                    },
+                    form=form,
+                    item_formset=item_formset,
+                    installment_formset=installment_formset,
+                    page_title="إنشاء عرض سعر",
                 )
 
-            valid_installments = [
-                inst_form
-                for inst_form in installment_formset
-                if inst_form.cleaned_data and not inst_form.cleaned_data.get("DELETE", False)
-            ]
+            valid_installments = []
+            for inst_form in installment_formset:
+                if not hasattr(inst_form, "cleaned_data") or not inst_form.cleaned_data:
+                    continue
+                if inst_form.cleaned_data.get("DELETE", False):
+                    continue
+                valid_installments.append(inst_form)
 
             total_percentage = sum(
-                inst_form.cleaned_data.get("percentage", 0) or 0
+                (inst_form.cleaned_data.get("percentage") or 0)
                 for inst_form in valid_installments
             )
 
             if valid_installments and total_percentage != 100:
                 messages.error(request, "مجموع نسب الدفعات يجب أن يساوي 100%")
-                return render(
+                return _render_quotation_form(
                     request,
-                    "quotations/quotation_form.html",
-                    {
-                        "form": form,
-                        "item_formset": item_formset,
-                        "installment_formset": installment_formset,
-                        "page_title": "إنشاء عرض سعر",
-                        "user_type_label": "عروض الأسعار",
-                    },
+                    form=form,
+                    item_formset=item_formset,
+                    installment_formset=installment_formset,
+                    page_title="إنشاء عرض سعر",
                 )
 
             with transaction.atomic():
@@ -155,21 +176,18 @@ def quotation_create_view(request):
             return redirect("quotation_detail", quotation_id=quotation.id)
 
         messages.error(request, "تعذر إنشاء عرض السعر، راجع الأخطاء الظاهرة في النموذج")
+
     else:
         form = PriceQuotationForm(institution=institution)
         item_formset = PriceQuotationItemFormSet(prefix="items")
         installment_formset = PriceQuotationInstallmentFormSet(prefix="installments")
 
-    return render(
+    return _render_quotation_form(
         request,
-        "quotations/quotation_form.html",
-        {
-            "form": form,
-            "item_formset": item_formset,
-            "installment_formset": installment_formset,
-            "page_title": "إنشاء عرض سعر",
-            "user_type_label": "عروض الأسعار",
-        },
+        form=form,
+        item_formset=item_formset,
+        installment_formset=installment_formset,
+        page_title="إنشاء عرض سعر",
     )
 
 
