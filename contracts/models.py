@@ -57,6 +57,13 @@ class MaintenanceContract(models.Model):
         (5, "5 أعوام"),
     )
 
+    CLIENT_STATUS_CHOICES = (
+        ("pending", "بانتظار قرار العميل"),
+        ("approved", "موافق"),
+        ("rejected", "مرفوض"),
+        ("revision_requested", "طلب تعديل"),
+    )
+
     contract_number = models.CharField(
         max_length=100,
         unique=True,
@@ -117,17 +124,13 @@ class MaintenanceContract(models.Model):
         verbose_name="مدة العقد"
     )
 
-    # يدخل من المستخدم بالميلادي
     start_date = models.DateField(verbose_name="تاريخ البداية")
-
-    # يتحسب تلقائياً من التاريخ الهجري للبداية
     end_date = models.DateField(
         blank=True,
         null=True,
         verbose_name="تاريخ النهاية"
     )
 
-    # حقول هجري للعرض والطباعة
     start_date_hijri = models.CharField(
         max_length=50,
         blank=True,
@@ -139,6 +142,23 @@ class MaintenanceContract(models.Model):
         blank=True,
         editable=False,
         verbose_name="تاريخ النهاية هجري"
+    )
+
+    client_status = models.CharField(
+        max_length=30,
+        choices=CLIENT_STATUS_CHOICES,
+        default="pending",
+        verbose_name="قرار العميل",
+    )
+    client_response_note = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="ملاحظة العميل",
+    )
+    client_response_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="تاريخ قرار العميل",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -155,7 +175,6 @@ class MaintenanceContract(models.Model):
         if not self.start_date:
             return
 
-        # تحويل البداية الميلادية إلى هجري
         start_hijri = Gregorian(
             self.start_date.year,
             self.start_date.month,
@@ -164,7 +183,6 @@ class MaintenanceContract(models.Model):
 
         self.start_date_hijri = format_hijri_date(start_hijri)
 
-        # حساب نهاية العقد على أساس التاريخ الهجري
         end_hijri = Hijri(
             start_hijri.year + int(self.duration_years),
             start_hijri.month,
@@ -173,7 +191,6 @@ class MaintenanceContract(models.Model):
 
         self.end_date_hijri = format_hijri_date(end_hijri)
 
-        # تحويل النهاية الهجرية إلى ميلادي للتخزين الداخلي
         end_gregorian = end_hijri.to_gregorian()
         self.end_date = date(
             end_gregorian.year,
