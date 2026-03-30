@@ -4,7 +4,9 @@ from io import BytesIO
 import qrcode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from hijridate import Gregorian
 
 from .forms import MaintenanceContractForm, ContractClauseTemplateForm
@@ -54,19 +56,101 @@ def build_qr_code_base64(data):
     return f"data:image/png;base64,{encoded}"
 
 
-@login_required
-def contract_list_view(request):
-    institution = request.user.institutions.first()
+def is_executive(user):
+    return user.is_authenticated and user.user_type == "executive"
 
-    if not institution:
-        messages.error(request, "يجب إنشاء مؤسسة أولاً")
-        return redirect("create_institution")
 
-    contracts = MaintenanceContract.objects.filter(institution=institution).select_related(
+def is_admin_assistant(user):
+    return user.is_authenticated and user.user_type == "admin_assistant"
+
+
+def is_technician(user):
+    return user.is_authenticated and user.user_type == "technician"
+
+
+def is_client(user):
+    return user.is_authenticated and user.user_type == "client"
+
+
+def can_manage_contracts(user):
+    return user.is_authenticated and user.user_type in ["executive", "admin_assistant"]
+
+
+def get_user_institution(user):
+    return user.institutions.first()
+
+
+def get_contract_for_user_or_404(user, contract_id):
+    institution = get_user_institution(user)
+
+    base_qs = MaintenanceContract.objects.select_related(
         "client",
         "institution",
         "executive",
     )
+
+    if is_client(user):
+        return get_object_or_404(
+            base_qs,
+            id=contract_id,
+            client=user,
+        )
+
+    if is_technician(user):
+        return get_object_or_404(
+            base_qs.distinct(),
+            id=contract_id,
+            visits__technician=user,
+        )
+
+    if can_manage_contracts(user):
+        return get_object_or_404(
+            base_qs,
+            id=contract_id,
+            institution=institution,
+        )
+
+    raise HttpResponseForbidden("غير مصرح لك")
+
+
+@login_required
+def contract_list_view(request):
+    institution = get_user_institution(request.user)
+
+    if can_manage_contracts(request.user):
+        if not institution:
+            messages.error(request, "يجب إنشاء مؤسسة أولاً")
+            return redirect("create_institution")
+
+        contracts = MaintenanceContract.objects.filter(
+            institution=institution
+        ).select_related(
+            "client",
+            "institution",
+            "executive",
+        )
+
+    elif is_client(request.user):
+        contracts = MaintenanceContract.objects.filter(
+            client=request.user
+        ).select_related(
+            "client",
+            "institution",
+            "executive",
+        )
+
+    elif is_technician(request.user):
+        contracts = MaintenanceContract.objects.filter(
+            visits__technician=request.user
+        ).select_related(
+            "client",
+            "institution",
+            "executive",
+        ).distinct()
+
+    else:
+        return HttpResponseForbidden("غير مصرح لك")
+
     return render(
         request,
         "contracts/contract_list.html",
@@ -79,7 +163,10 @@ def contract_list_view(request):
 
 @login_required
 def contract_create_view(request):
-    institution = request.user.institutions.first()
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
 
     if not institution:
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
@@ -104,6 +191,9 @@ def contract_create_view(request):
 
             if client:
                 contract.client = client
+
+            if hasattr(contract, "client_status") and not contract.client_status:
+                contract.client_status = "pending"
 
             contract.save()
 
@@ -134,21 +224,8 @@ def contract_create_view(request):
 
 @login_required
 def contract_detail_view(request, contract_id):
-    institution = request.user.institutions.first()
+    contract = get_contract_for_user_or_404(request.user, contract_id)
 
-    if not institution:
-        messages.error(request, "يجب إنشاء مؤسسة أولاً")
-        return redirect("create_institution")
-
-    contract = get_object_or_404(
-        MaintenanceContract.objects.select_related(
-            "client",
-            "institution",
-            "executive",
-        ),
-        id=contract_id,
-        institution=institution,
-    )
     return render(
         request,
         "contracts/contract_detail.html",
@@ -161,11 +238,24 @@ def contract_detail_view(request, contract_id):
 
 @login_required
 def contract_print_view(request, contract_id):
-    institution = request.user.institutions.first()
+    contract = get_contract_for_user_or_404(request.user, contract_id)
 
-    if not institution:
-        messages.error(request, "يجب إنشاء مؤسسة أولاً")
-        return redirect("create_institution")
+    qr_code = build_qr_code_base64(contract.building_location)
+
+    context = {
+        "contract": contract,
+        "created_at_hijri": format_hijri(contract.created_at.date()),
+        "start_date_hijri": getattr(contract, "start_date_hijri", "") or format_hijri(contract.start_date),
+        "end_date_hijri": getattr(contract, "end_date_hijri", "") or format_hijri(contract.end_date),
+        "building_location_qr": qr_code,
+    }
+    return render(request, "contracts/contract_print.html", context)
+
+
+@login_required
+def contract_client_decision_view(request, contract_id):
+    if not is_client(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
 
     contract = get_object_or_404(
         MaintenanceContract.objects.select_related(
@@ -174,30 +264,53 @@ def contract_print_view(request, contract_id):
             "executive",
         ),
         id=contract_id,
-        institution=institution
+        client=request.user,
     )
 
-    qr_code = build_qr_code_base64(contract.building_location)
+    if request.method != "POST":
+        return redirect("contract_detail", contract_id=contract.id)
 
-    context = {
-        "contract": contract,
-        "created_at_hijri": format_hijri(contract.created_at.date()),
-        "start_date_hijri": contract.start_date_hijri or format_hijri(contract.start_date),
-        "end_date_hijri": contract.end_date_hijri or format_hijri(contract.end_date),
-        "building_location_qr": qr_code,
-    }
-    return render(request, "contracts/contract_print.html", context)
+    decision = request.POST.get("decision")
+    note = (request.POST.get("client_response_note") or "").strip()
+
+    if decision not in ["approved", "rejected", "revision_requested"]:
+        messages.error(request, "القرار غير صحيح")
+        return redirect("contract_detail", contract_id=contract.id)
+
+    if decision in ["rejected", "revision_requested"] and not note:
+        messages.error(request, "يرجى كتابة السبب أو التعديل المطلوب")
+        return redirect("contract_detail", contract_id=contract.id)
+
+    contract.client_status = decision
+    contract.client_response_note = note if note else ""
+    contract.client_response_at = timezone.now()
+    contract.save(update_fields=["client_status", "client_response_note", "client_response_at"])
+
+    if decision == "approved":
+        messages.success(request, "تمت الموافقة على العقد بنجاح")
+    elif decision == "rejected":
+        messages.success(request, "تم رفض العقد")
+    else:
+        messages.success(request, "تم إرسال طلب التعديل بنجاح")
+
+    return redirect("contract_detail", contract_id=contract.id)
 
 
 @login_required
 def clause_template_list_view(request):
-    institution = request.user.institutions.first()
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
 
     if not institution:
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
         return redirect("create_institution")
 
-    templates = ContractClauseTemplate.objects.filter(institution=institution).order_by("order", "id")
+    templates = ContractClauseTemplate.objects.filter(
+        institution=institution
+    ).order_by("order", "id")
+
     return render(
         request,
         "contracts/clause_template_list.html",
@@ -210,7 +323,10 @@ def clause_template_list_view(request):
 
 @login_required
 def clause_template_create_view(request):
-    institution = request.user.institutions.first()
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
 
     if not institution:
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
@@ -241,7 +357,10 @@ def clause_template_create_view(request):
 
 @login_required
 def contract_edit_view(request, contract_id):
-    institution = request.user.institutions.first()
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
 
     if not institution:
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
@@ -275,6 +394,12 @@ def contract_edit_view(request, contract_id):
                 ).first()
 
             contract.client = client if client else None
+
+            if hasattr(contract, "client_status") and contract.client_status in ["rejected", "revision_requested"]:
+                contract.client_status = "pending"
+                contract.client_response_note = ""
+                contract.client_response_at = None
+
             contract.save()
 
             selected_templates = form.cleaned_data.get("clause_templates") or []
@@ -295,10 +420,10 @@ def contract_edit_view(request, contract_id):
         messages.error(request, "تعذر تعديل العقد، راجع الأخطاء الظاهرة في النموذج")
 
     else:
-        existing_template_ids = contract.clauses.values_list("title", flat=True)
+        existing_template_titles = contract.clauses.values_list("title", flat=True)
         initial_templates = ContractClauseTemplate.objects.filter(
             institution=institution,
-            title__in=existing_template_ids,
+            title__in=existing_template_titles,
             is_active=True,
         )
         form.fields["clause_templates"].initial = initial_templates
@@ -317,7 +442,10 @@ def contract_edit_view(request, contract_id):
 
 @login_required
 def contract_delete_view(request, contract_id):
-    institution = request.user.institutions.first()
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
 
     if not institution:
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
