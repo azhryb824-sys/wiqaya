@@ -20,6 +20,17 @@ class PriceQuotation(models.Model):
         ("bank_transfer", "تحويل بنكي"),
         ("cash", "نقداً"),
     ]
+    transfer_receipt = models.ImageField(
+    upload_to="quotation_transfer_receipts/",
+    blank=True,
+    null=True,
+    verbose_name="إيصال التحويل",
+)
+    payment_proof_uploaded_at = models.DateTimeField(
+    blank=True,
+    null=True,
+    verbose_name="تاريخ رفع إيصال التحويل",
+)
 
     institution = models.ForeignKey(
         "core.Institution",
