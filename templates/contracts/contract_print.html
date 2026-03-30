@@ -4,377 +4,459 @@
     <meta charset="UTF-8">
     <title>طباعة عقد الصيانة</title>
     <style>
-       @page {
-    size: A4 portrait;
-    margin: 0;
-}
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
 
-html, body {
-    margin: 0;
-    padding: 0;
-    background: #ececec;
-    font-family: "Cairo", Arial, sans-serif;
-    direction: rtl;
-    color: #111;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-}
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #ececec;
+            font-family: "Cairo", Arial, sans-serif;
+            direction: rtl;
+            color: #111;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
 
-* {
-    box-sizing: border-box;
-}
+        * {
+            box-sizing: border-box;
+        }
 
-/* ===================== A4 ===================== */
-.a4-wrapper {
-    display: flex;
-    justify-content: center;
-    padding: 24px 0;
-}
+        .a4-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 24px 0;
+        }
 
-.page {
-    width: 210mm;
-    min-height: 297mm;
-    background: #fff;
-    box-shadow: 0 0 24px rgba(0, 0, 0, 0.10);
-}
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            background: #fff;
+            box-shadow: 0 0 24px rgba(0, 0, 0, 0.10);
+        }
 
-.page-inner {
-    padding: 24mm 18mm 18mm;
-}
+        .page-inner {
+            padding: 18mm 18mm 16mm;
+        }
 
-/* ===================== HEADER ===================== */
-.letterhead {
-    position: relative;
-    padding-bottom: 18px;
-    margin-bottom: 26px;
-    border-bottom: 3px solid #7a0f1d;
-}
+        /* ===== الهيدر ===== */
+        .letterhead {
+            position: relative;
+            margin-bottom: 26px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid #7a0f1d;
+        }
 
-.letterhead::after {
-    content: "";
-    position: absolute;
-    bottom: -3px;
-    right: 0;
-    width: 90px;
-    height: 3px;
-    background: #b58a4b;
-}
+        .letterhead::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            right: 0;
+            width: 90px;
+            height: 2px;
+            background: #c6a15b;
+        }
 
-.header-grid {
-    display: table;
-    width: 100%;
-}
+        .header-grid {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
 
-.header-cell {
-    display: table-cell;
-    vertical-align: middle;
-}
+        .header-right {
+            width: 28%;
+            text-align: right;
+        }
 
-.header-right {
-    width: 30%;
-    text-align: right;
-}
+        .header-center {
+            width: 16%;
+            display: flex;
+            justify-content: center;
+        }
 
-.header-center {
-    width: 15%;
-    text-align: center;
-}
+        .header-left {
+            width: 56%;
+            text-align: left;
+        }
 
-.header-left {
-    width: 55%;
-    text-align: left;
-}
+        .institution-name {
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.8;
+            color: #222;
+        }
 
-.platform-title {
-    margin: 0;
-    font-size: 32px;
-    font-weight: 800;
-    color: #7a0f1d;
-}
+        .institution-meta {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.8;
+        }
 
-.platform-subtitle {
-    font-size: 13px;
-    color: #666;
-    margin-top: 5px;
-}
+        .logo-badge {
+            width: 74px;
+            height: 74px;
+            border: 2px solid #7a0f1d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7a0f1d;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(180deg, #fff, #faf7f7);
+        }
 
-.institution-name {
-    font-size: 15px;
-    font-weight: 700;
-}
+        .platform-title {
+            margin: 0;
+            font-size: 31px;
+            font-weight: 900;
+            color: #7a0f1d;
+            line-height: 1.1;
+        }
 
-.institution-meta {
-    font-size: 13px;
-    color: #555;
-}
+        .platform-subtitle {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #777;
+            line-height: 1.7;
+        }
 
-/* الشعار */
-.logo-badge {
-    width: 75px;
-    height: 75px;
-    border: 2px solid #7a0f1d;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    color: #7a0f1d;
-}
+        /* ===== عنوان العقد ===== */
+        .doc-title-wrap {
+            text-align: center;
+            margin-bottom: 22px;
+        }
 
-/* ===================== TITLE ===================== */
-.doc-title {
-    text-align: center;
-    font-size: 24px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #000;
-    display: inline-block;
-    padding-bottom: 5px;
-}
+        .doc-title {
+            display: inline-block;
+            margin: 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #111;
+            font-size: 26px;
+            font-weight: 900;
+            color: #111;
+        }
 
-/* ===================== CONTENT ===================== */
-.contract-body {
-    font-size: 15px;
-    line-height: 2;
-}
+        /* ===== جسم العقد ===== */
+        .contract-body {
+            font-size: 15px;
+            line-height: 2.15;
+        }
 
-.paragraph {
-    margin-bottom: 12px;
-    text-align: justify;
-}
+        .paragraph {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
 
-.section-title {
-    margin: 20px 0 10px;
-    font-weight: 800;
-    color: #7a0f1d;
-}
+        .paragraph strong {
+            font-weight: 800;
+        }
 
-/* ===================== CLAUSES ===================== */
-.clauses-box {
-    border: 1px solid #e5e5e5;
-    border-radius: 12px;
-    padding: 12px;
-    background: #fafafa;
-}
+        .info-box {
+            margin: 18px 0;
+            padding: 14px 16px;
+            border: 1px solid #ece2d7;
+            border-radius: 16px;
+            background: #fcfbfa;
+        }
 
-.clauses {
-    padding-right: 20px;
-}
+        .info-row {
+            margin-bottom: 8px;
+        }
 
-.clauses li {
-    margin-bottom: 8px;
-    page-break-inside: avoid;
-}
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
 
-/* ===================== QR ===================== */
-.qr-wrapper {
-    margin-top: 15px;
-    text-align: left;
-}
+        .section-title {
+            margin: 24px 0 12px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #7a0f1d;
+        }
 
-.qr-wrapper img {
-    width: 80px;
-}
+        .clauses-box {
+            border: 1px solid #e8e2d9;
+            border-radius: 18px;
+            padding: 14px 16px 8px;
+            background: #fcfbfa;
+        }
 
-/* ===================== SIGNATURE ===================== */
-.signature-block {
-    margin-top: 50px;
-}
+        .clauses {
+            margin: 0;
+            padding-right: 22px;
+        }
 
-.signature-table {
-    width: 100%;
-}
+        .clauses li {
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
 
-.signature-table td {
-    width: 50%;
-    text-align: center;
-}
+        .clauses li strong {
+            font-weight: 800;
+        }
 
-.sign-card {
-    border: 1px solid #ddd;
-    border-radius: 15px;
-    padding: 20px;
-    min-height: 200px;
-}
+        .qr-wrapper {
+            margin-top: 18px;
+            text-align: left;
+        }
 
-.sig-heading {
-    font-size: 18px;
-    font-weight: 800;
-    color: #7a0f1d;
-}
+        .qr-wrapper img {
+            width: 84px;
+            height: 84px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            padding: 4px;
+            border-radius: 10px;
+            background: #fff;
+        }
 
-.sig-name {
-    font-weight: 700;
-    margin: 15px 0;
-}
+        /* ===== التوقيعات ===== */
+        .signature-block {
+            margin-top: 48px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
 
-.sig-label {
-    margin-top: 20px;
-    font-weight: 700;
-}
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-.signature-image {
-    max-width: 130px;
-}
+        .signature-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 8px;
+        }
 
-.stamp-image {
-    max-width: 100px;
-}
+        .sign-card {
+            border: 1px solid #ece7df;
+            border-radius: 18px;
+            padding: 20px 16px;
+            min-height: 220px;
+            text-align: center;
+            background: #fff;
+        }
 
-/* ===================== FOOTER ===================== */
-.footer-note {
-    margin-top: 25px;
-    text-align: center;
-    font-size: 11px;
-    color: #777;
-}
+        .sig-heading {
+            font-size: 20px;
+            font-weight: 900;
+            color: #7a0f1d;
+            margin-bottom: 10px;
+        }
 
-/* ===================== PRINT ===================== */
-@media print {
-    body {
-        background: white;
-    }
+        .sig-name {
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.9;
+            margin-bottom: 18px;
+        }
 
-    .a4-wrapper {
-        padding: 0;
-    }
+        .sig-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 14px;
+        }
 
-    .page {
-        box-shadow: none;
-        width: 100%;
-    }
-}
+        .approval-note {
+            margin-top: 18px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f5132;
+        }
+
+        .signature-image,
+        .stamp-image {
+            display: block;
+            margin: 10px auto 0;
+            object-fit: contain;
+        }
+
+        .signature-image {
+            max-width: 140px;
+            max-height: 70px;
+        }
+
+        .stamp-image {
+            max-width: 110px;
+            max-height: 110px;
+        }
+
+        /* ===== الفوتر ===== */
+        .footer-note {
+            margin-top: 24px;
+            padding-top: 10px;
+            border-top: 1px solid #e7e7e7;
+            text-align: center;
+            font-size: 11px;
+            color: #777;
+        }
+
+        @media print {
+            html, body {
+                background: #fff;
+            }
+
+            .a4-wrapper {
+                padding: 0;
+            }
+
+            .page {
+                width: 100%;
+                min-height: auto;
+                box-shadow: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="letterhead">
-            <table class="letterhead-table">
-                <tr>
-                    <td class="lh-right">
-                        <p class="institution-info">
-                            {% if contract.institution.name %}
-                                {{ contract.institution.name }}<br>
-                            {% endif %}
-                            {% if contract.institution.unified_number %}
-                                الرقم الموحد: {{ contract.institution.unified_number }}
-                            {% endif %}
-                        </p>
-                    </td>
+    <div class="a4-wrapper">
+        <div class="page">
+            <div class="page-inner">
 
-                    <td class="lh-center">
-                        <div class="logo-box">وقاية</div>
-                    </td>
+                <div class="letterhead">
+                    <div class="header-grid">
+                        <div class="header-right">
+                            <div class="institution-name">
+                                {{ contract.institution.name }}
+                            </div>
+                            <div class="institution-meta">
+                                {% if contract.institution.unified_number %}
+                                    الرقم الموحد: {{ contract.institution.unified_number }}
+                                {% endif %}
+                            </div>
+                        </div>
 
-                    <td class="lh-left">
-                        <h1 class="platform-title">منصة وقاية</h1>
-                        <p class="platform-subtitle">
-                            منصة لإدارة عقود الصيانة والسلامة والإطفاء والإنذار
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                        <div class="header-center">
+                            <div class="logo-badge">وقاية</div>
+                        </div>
 
-        <h2 class="doc-title">عقد صيانة ({{ contract.contract_number }})</h2>
-
-        <div class="contract-body">
-            <div class="paragraph">
-                إنه في يوم <strong>{{ start_date_hijri }}</strong> الموافق <strong>{{ contract.start_date }}</strong> تم الاتفاق بين:
-            </div>
-
-            <div class="paragraph">
-                <strong>الطرف الأول:</strong>
-                {{ contract.institution.name }}
-                {% if contract.institution.unified_number %}
-                    بالرقم الموحد <strong>{{ contract.institution.unified_number }}</strong>
-                {% endif %}
-            </div>
-
-            <div class="paragraph">
-                <strong>الطرف الثاني:</strong>
-                {{ contract.second_party_name }}
-                {% if contract.client_identifier %}
-                    بمعرف / رقم <strong>{{ contract.client_identifier }}</strong>
-                {% endif %}
-            </div>
-
-            <div class="paragraph">
-                <strong>تمهيد:</strong>
-                بما أن الطرف الأول من الجهات العاملة في مجال الأمن والسلامة، وحيث إن الطرف الثاني يرغب في صيانة وسائل السلامة بالمبنى العائد له:
-                <strong>{{ contract.building_name }}</strong>
-                {% if contract.activity %}
-                    ، والخاص بنشاط <strong>{{ contract.activity }}</strong>
-                {% endif %}
-                ، فقد اتفق الطرفان على ما يلي:
-            </div>
-
-            <div class="contract-meta paragraph">
-                <strong>مدة العقد:</strong>
-                من <strong>{{ start_date_hijri }}</strong> إلى <strong>{{ end_date_hijri }}</strong>
-            </div>
-
-            {% if contract.building_location %}
-                <div class="contract-meta paragraph">
-                    <strong>الموقع:</strong>
-                    {{ contract.building_location }}
+                        <div class="header-left">
+                            <div class="platform-title">منصة وقاية</div>
+                            <div class="platform-subtitle">
+                                منصة لإدارة عقود الصيانة والسلامة والإطفاء والإنذار
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            {% endif %}
 
-            <div class="section-title">بنود العقد:</div>
+                <div class="doc-title-wrap">
+                    <h2 class="doc-title">عقد صيانة ({{ contract.contract_number }})</h2>
+                </div>
 
-            <ol class="clauses">
-                {% for clause in contract.clauses.all %}
-                    <li>
-                        <strong>{{ clause.title }}</strong>
-                        {% if clause.content %}
-                            : {{ clause.content }}
+                <div class="contract-body">
+                    <div class="paragraph">
+                        إنه في يوم <strong>{{ start_date_hijri }}</strong> الموافق <strong>{{ contract.start_date }}</strong> تم الاتفاق بين:
+                    </div>
+
+                    <div class="paragraph">
+                        <strong>الطرف الأول:</strong>
+                        {{ contract.institution.name }}
+                        {% if contract.institution.unified_number %}
+                            بالرقم الموحد <strong>{{ contract.institution.unified_number }}</strong>
                         {% endif %}
-                    </li>
-                {% empty %}
-                    <li>لا توجد بنود مضافة لهذا العقد.</li>
-                {% endfor %}
-            </ol>
+                    </div>
 
-            {% if building_location_qr %}
-                <div class="qr-wrapper avoid-break">
-                    <img src="{{ building_location_qr }}" alt="QR">
+                    <div class="paragraph">
+                        <strong>الطرف الثاني:</strong>
+                        {{ contract.second_party_name }}
+                        {% if contract.client_identifier %}
+                            بمعرف / رقم <strong>{{ contract.client_identifier }}</strong>
+                        {% endif %}
+                    </div>
+
+                    <div class="paragraph">
+                        <strong>تمهيد:</strong>
+                        بما أن الطرف الأول من الجهات العاملة في مجال الأمن والسلامة، وحيث إن الطرف الثاني يرغب في عمل الصيانة الدورية لجميع وسائل السلامة بالمبنى العائد له:
+                        <strong>{{ contract.building_name }}</strong>
+                        {% if contract.activity %}
+                            ، والخاص بنشاط <strong>{{ contract.activity }}</strong>
+                        {% endif %}
+                        ، فقد اتفق الطرفان على ما يلي:
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-row">
+                            <strong>مدة العقد:</strong>
+                            من <strong>{{ start_date_hijri }}</strong> إلى <strong>{{ end_date_hijri }}</strong>
+                        </div>
+
+                        {% if contract.building_location %}
+                            <div class="info-row">
+                                <strong>الموقع:</strong>
+                                {{ contract.building_location }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="section-title">بنود العقد</div>
+
+                    <div class="clauses-box">
+                        <ol class="clauses">
+                            {% for clause in contract.clauses.all %}
+                                <li>
+                                    <strong>{{ clause.title }}</strong>
+                                    {% if clause.content %}
+                                        : {{ clause.content }}
+                                    {% endif %}
+                                </li>
+                            {% empty %}
+                                <li>لا توجد بنود مضافة لهذا العقد.</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+
+                    {% if building_location_qr %}
+                        <div class="qr-wrapper">
+                            <img src="{{ building_location_qr }}" alt="QR">
+                        </div>
+                    {% endif %}
+
+                    <div class="signature-block">
+                        <table class="signature-table">
+                            <tr>
+                                <td>
+                                    <div class="sign-card">
+                                        <div class="sig-heading">الطرف الأول</div>
+                                        <div class="sig-name">{{ contract.institution.name }}</div>
+                                        <div class="sig-label">التوقيع والختم</div>
+
+                                        {% if contract.institution.signature %}
+                                            <img class="signature-image" src="{{ contract.institution.signature.url }}" alt="التوقيع">
+                                        {% endif %}
+
+                                        {% if contract.institution.stamp %}
+                                            <img class="stamp-image" src="{{ contract.institution.stamp.url }}" alt="الختم">
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="sign-card">
+                                        <div class="sig-heading">الطرف الثاني</div>
+                                        <div class="sig-name">{{ contract.second_party_name }}</div>
+
+                                        {% if contract.client and contract.client.user_type == "client" and contract.client.is_active %}
+                                            <div class="approval-note">يتم الاعتماد من قبل العميل عبر المنصة</div>
+                                        {% else %}
+                                            <div class="sig-label">التوقيع</div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="footer-note">
+                        منصة وقاية — مطبوع عقد صيانة
+                    </div>
                 </div>
-            {% endif %}
 
-            <div class="signature-block">
-                <table class="signature-table">
-                    <tr>
-                        <td>
-                            <div class="sig-heading">الطرف الأول</div>
-                            <div class="sig-name">{{ contract.institution.name }}</div>
-                            <div class="sig-label">التوقيع</div>
-
-                            {% if contract.institution.signature %}
-                                <img class="signature-image" src="{{ contract.institution.signature.url }}" alt="التوقيع">
-                            {% endif %}
-
-                            {% if contract.institution.stamp %}
-                                <img class="stamp-image" src="{{ contract.institution.stamp.url }}" alt="الختم">
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <div class="sig-heading">الطرف الثاني</div>
-                            <div class="sig-name">{{ contract.second_party_name }}</div>
-
-                            {% if contract.client and contract.client.user_type == "client" and contract.client.is_active %}
-                                <div class="approval-note">يتم الاعتماد من قبل العميل عبر المنصة</div>
-                            {% else %}
-                                <div class="sig-label">التوقيع</div>
-                            {% endif %}
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="footer-note">
-                منصة وقاية — مطبوع عقد صيانة
             </div>
         </div>
     </div>
