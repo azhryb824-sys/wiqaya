@@ -113,14 +113,24 @@ def quotation_create_view(request):
         item_formset = PriceQuotationItemFormSet(request.POST, prefix="items")
         installment_formset = PriceQuotationInstallmentFormSet(request.POST, prefix="installments")
 
-        if form.is_valid() and item_formset.is_valid() and installment_formset.is_valid():
+        form_valid = form.is_valid()
+        items_valid = item_formset.is_valid()
+        installments_valid = installment_formset.is_valid()
+
+        if form_valid and items_valid and installments_valid:
             valid_items = []
-            for item_form in item_formset:
-                if not hasattr(item_form, "cleaned_data") or not item_form.cleaned_data:
+            for item_form in item_formset.forms:
+                if not getattr(item_form, "cleaned_data", None):
                     continue
                 if item_form.cleaned_data.get("DELETE", False):
                     continue
-                valid_items.append(item_form)
+
+                description = (item_form.cleaned_data.get("description") or "").strip()
+                quantity = item_form.cleaned_data.get("quantity")
+                unit_price = item_form.cleaned_data.get("unit_price")
+
+                if description and quantity and unit_price is not None:
+                    valid_items.append(item_form)
 
             if not valid_items:
                 messages.error(request, "يجب إضافة بند واحد على الأقل في عرض السعر")
@@ -133,19 +143,39 @@ def quotation_create_view(request):
                 )
 
             valid_installments = []
-            for inst_form in installment_formset:
-                if not hasattr(inst_form, "cleaned_data") or not inst_form.cleaned_data:
+            for inst_form in installment_formset.forms:
+                if not getattr(inst_form, "cleaned_data", None):
                     continue
                 if inst_form.cleaned_data.get("DELETE", False):
                     continue
+
+                title = (inst_form.cleaned_data.get("title") or "").strip()
+                percentage = inst_form.cleaned_data.get("percentage")
+                due_description = (inst_form.cleaned_data.get("due_description") or "").strip()
+
+                # تجاهل الصف الفارغ بالكامل
+                if not title and percentage in [None, ""] and not due_description:
+                    continue
+
+                # لو بدأ المستخدم يعبّي دفعة، لازم يكملها
+                if not title or percentage is None or not due_description:
+                    messages.error(request, "يجب تعبئة جميع بيانات الدفعة أو حذف الصف الفارغ")
+                    return _render_quotation_form(
+                        request,
+                        form=form,
+                        item_formset=item_formset,
+                        installment_formset=installment_formset,
+                        page_title="إنشاء عرض سعر",
+                    )
+
                 valid_installments.append(inst_form)
 
             total_percentage = sum(
-                (inst_form.cleaned_data.get("percentage") or 0)
+                float(inst_form.cleaned_data.get("percentage") or 0)
                 for inst_form in valid_installments
             )
 
-            if valid_installments and total_percentage != 100:
+            if valid_installments and round(total_percentage, 2) != 100.00:
                 messages.error(request, "مجموع نسب الدفعات يجب أن يساوي 100%")
                 return _render_quotation_form(
                     request,
@@ -175,7 +205,36 @@ def quotation_create_view(request):
             messages.success(request, "تم إنشاء عرض السعر بنجاح")
             return redirect("quotation_detail", quotation_id=quotation.id)
 
-        messages.error(request, "تعذر إنشاء عرض السعر، راجع الأخطاء الظاهرة في النموذج")
+        # إظهار الأخطاء الحقيقية بدل الرسالة العامة فقط
+        if form.errors:
+            for field_name, errors in form.errors.items():
+                label = form.fields[field_name].label if field_name in form.fields else field_name
+                for error in errors:
+                    messages.error(request, f"{label}: {error}")
+
+        for index, item_errors in enumerate(item_formset.errors, start=1):
+            for field_name, errors in item_errors.items():
+                field = item_formset.forms[index - 1].fields.get(field_name)
+                label = field.label if field else field_name
+                for error in errors:
+                    messages.error(request, f"البند {index} - {label}: {error}")
+
+        for index, inst_errors in enumerate(installment_formset.errors, start=1):
+            for field_name, errors in inst_errors.items():
+                field = installment_formset.forms[index - 1].fields.get(field_name)
+                label = field.label if field else field_name
+                for error in errors:
+                    messages.error(request, f"الدفعة {index} - {label}: {error}")
+
+        if item_formset.non_form_errors():
+            for error in item_formset.non_form_errors():
+                messages.error(request, error)
+
+        if installment_formset.non_form_errors():
+            for error in installment_formset.non_form_errors():
+                messages.error(request, error)
+
+        messages.error(request, "تعذر إنشاء عرض السعر، راجع الأخطاء الظاهرة في الصفحة")
 
     else:
         form = PriceQuotationForm(institution=institution)
@@ -189,7 +248,7 @@ def quotation_create_view(request):
         installment_formset=installment_formset,
         page_title="إنشاء عرض سعر",
     )
-
+لماذا هذا التعديل يحل المشكلة
 
 @login_required
 def quotation_detail_view(request, quotation_id):
