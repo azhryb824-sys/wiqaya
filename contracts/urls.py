@@ -4,10 +4,6 @@ from . import views
 urlpatterns = [
     path("", views.contract_list_view, name="contracts_list"),
     path("create/", views.contract_create_view, name="contract_create"),
-
-    # ✅ تحقق من العميل أو المنشأة
-    path("verify-client/", views.verify_client_identifier_view, name="verify_client_identifier"),
-
     path("<int:contract_id>/", views.contract_detail_view, name="contract_detail"),
     path("<int:contract_id>/edit/", views.contract_edit_view, name="contract_edit"),
     path("<int:contract_id>/print/", views.contract_print_view, name="contract_print"),
