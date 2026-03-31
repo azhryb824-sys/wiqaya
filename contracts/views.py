@@ -189,8 +189,7 @@ def contract_create_view(request):
                     national_id=client_identifier
                 ).first()
 
-            if client:
-                contract.client = client
+            contract.client = client if client else None
 
             if hasattr(contract, "client_status") and not contract.client_status:
                 contract.client_status = "pending"
