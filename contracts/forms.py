@@ -1,6 +1,5 @@
 from django import forms
 from .models import MaintenanceContract, ContractClauseTemplate
-from core.models import User
 
 
 class MaintenanceContractForm(forms.ModelForm):
@@ -15,7 +14,6 @@ class MaintenanceContractForm(forms.ModelForm):
         model = MaintenanceContract
         fields = [
             "contract_number",
-            "client",
             "client_identifier",
             "second_party_name",
             "building_name",
@@ -28,13 +26,15 @@ class MaintenanceContractForm(forms.ModelForm):
         ]
         widgets = {
             "contract_number": forms.TextInput(attrs={"class": "form-control"}),
-            "client": forms.Select(attrs={"class": "form-select"}),
             "client_identifier": forms.TextInput(attrs={
                 "class": "form-control",
                 "placeholder": "أدخل رقم هوية العميل أو الرقم الموحد للمنشأة",
                 "dir": "ltr",
             }),
-            "second_party_name": forms.TextInput(attrs={"class": "form-control"}),
+            "second_party_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "readonly": "readonly",
+            }),
             "building_name": forms.TextInput(attrs={"class": "form-control"}),
             "activity": forms.TextInput(attrs={"class": "form-control"}),
             "building_location": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
@@ -48,7 +48,6 @@ class MaintenanceContractForm(forms.ModelForm):
         }
         labels = {
             "contract_number": "رقم العقد",
-            "client": "العميل",
             "client_identifier": "رقم هوية العميل أو الرقم الموحد للمنشأة",
             "second_party_name": "اسم الطرف الثاني",
             "building_name": "اسم المبنى",
@@ -59,7 +58,8 @@ class MaintenanceContractForm(forms.ModelForm):
             "start_date": "تاريخ بداية العقد (ميلادي)",
         }
         help_texts = {
-            "client_identifier": "أدخل رقم الهوية أو الرقم الموحد ثم استخدم التحقق في صفحة العقد لإحضار بيانات العميل أو المنشأة إن كانت مسجلة في المنصة.",
+            "client_identifier": "أدخل رقم هوية العميل أو الرقم الموحد للمنشأة، وسيتم الربط تلقائياً عند حفظ العقد.",
+            "second_party_name": "يُعبأ تلقائياً باسم المنشأة عند إدخال الرقم الموحد، أو باسم العميل عند إدخال رقم الهوية.",
             "google_maps_url": "أدخل رابط موقع المبنى من خرائط جوجل ليظهر رابط الموقع في الزيارة وسجل الزيارات.",
         }
 
@@ -68,20 +68,16 @@ class MaintenanceContractForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if institution:
-            self.fields["client"].queryset = institution.users.filter(
-                user_type="client"
-            )
             self.fields["clause_templates"].queryset = institution.contract_clause_templates.filter(
                 is_active=True
             ).order_by("order", "id")
         else:
-            self.fields["client"].queryset = User.objects.filter(user_type="client")
             self.fields["clause_templates"].queryset = ContractClauseTemplate.objects.filter(
                 is_active=True
             ).order_by("order", "id")
 
-        self.fields["client"].required = False
         self.fields["client_identifier"].required = False
+        self.fields["second_party_name"].required = False
         self.fields["activity"].required = False
         self.fields["building_location"].required = False
         self.fields["google_maps_url"].required = False
@@ -111,33 +107,6 @@ class MaintenanceContractForm(forms.ModelForm):
                 raise forms.ValidationError("الرجاء إدخال رابط صحيح من خرائط جوجل.")
 
         return google_maps_url
-
-    def clean(self):
-        cleaned_data = super().clean()
-        client = cleaned_data.get("client")
-        client_identifier = (cleaned_data.get("client_identifier") or "").strip()
-        second_party_name = (cleaned_data.get("second_party_name") or "").strip()
-
-        if client and not client_identifier:
-            if client.national_id:
-                cleaned_data["client_identifier"] = client.national_id
-            elif getattr(client, "business_unified_number", None):
-                cleaned_data["client_identifier"] = client.business_unified_number
-
-        if client and not second_party_name:
-            identifier = cleaned_data.get("client_identifier", "")
-
-            if (
-                getattr(client, "business_unified_number", None)
-                and identifier == client.business_unified_number
-                and getattr(client, "business_name", None)
-            ):
-                cleaned_data["second_party_name"] = client.business_name
-            else:
-                full_name = client.get_full_name().strip()
-                cleaned_data["second_party_name"] = full_name if full_name else client.username
-
-        return cleaned_data
 
 
 class ContractClauseTemplateForm(forms.ModelForm):
