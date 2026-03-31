@@ -29,7 +29,11 @@ class MaintenanceContractForm(forms.ModelForm):
         widgets = {
             "contract_number": forms.TextInput(attrs={"class": "form-control"}),
             "client": forms.Select(attrs={"class": "form-select"}),
-            "client_identifier": forms.TextInput(attrs={"class": "form-control"}),
+            "client_identifier": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "أدخل رقم هوية العميل أو الرقم الموحد للمنشأة",
+                "dir": "ltr",
+            }),
             "second_party_name": forms.TextInput(attrs={"class": "form-control"}),
             "building_name": forms.TextInput(attrs={"class": "form-control"}),
             "activity": forms.TextInput(attrs={"class": "form-control"}),
@@ -45,7 +49,7 @@ class MaintenanceContractForm(forms.ModelForm):
         labels = {
             "contract_number": "رقم العقد",
             "client": "العميل",
-            "client_identifier": "معرف العميل",
+            "client_identifier": "رقم هوية العميل أو الرقم الموحد للمنشأة",
             "second_party_name": "اسم الطرف الثاني",
             "building_name": "اسم المبنى",
             "activity": "النشاط",
@@ -55,7 +59,8 @@ class MaintenanceContractForm(forms.ModelForm):
             "start_date": "تاريخ بداية العقد (ميلادي)",
         }
         help_texts = {
-            "google_maps_url": "أدخل رابط موقع المبنى من خرائط جوجل ليتم توليد الباركود تلقائياً.",
+            "client_identifier": "أدخل رقم الهوية أو الرقم الموحد ثم استخدم التحقق في صفحة العقد لإحضار بيانات العميل أو المنشأة إن كانت مسجلة في المنصة.",
+            "google_maps_url": "أدخل رابط موقع المبنى من خرائط جوجل ليظهر رابط الموقع في الزيارة وسجل الزيارات.",
         }
 
     def __init__(self, *args, **kwargs):
@@ -106,6 +111,33 @@ class MaintenanceContractForm(forms.ModelForm):
                 raise forms.ValidationError("الرجاء إدخال رابط صحيح من خرائط جوجل.")
 
         return google_maps_url
+
+    def clean(self):
+        cleaned_data = super().clean()
+        client = cleaned_data.get("client")
+        client_identifier = (cleaned_data.get("client_identifier") or "").strip()
+        second_party_name = (cleaned_data.get("second_party_name") or "").strip()
+
+        if client and not client_identifier:
+            if client.national_id:
+                cleaned_data["client_identifier"] = client.national_id
+            elif getattr(client, "business_unified_number", None):
+                cleaned_data["client_identifier"] = client.business_unified_number
+
+        if client and not second_party_name:
+            identifier = cleaned_data.get("client_identifier", "")
+
+            if (
+                getattr(client, "business_unified_number", None)
+                and identifier == client.business_unified_number
+                and getattr(client, "business_name", None)
+            ):
+                cleaned_data["second_party_name"] = client.business_name
+            else:
+                full_name = client.get_full_name().strip()
+                cleaned_data["second_party_name"] = full_name if full_name else client.username
+
+        return cleaned_data
 
 
 class ContractClauseTemplateForm(forms.ModelForm):
