@@ -208,6 +208,70 @@ class CreateUserForm(UserCreationForm):
         return business_unified_number
 
 
+class ClientProfileForm(forms.ModelForm):
+    first_name = forms.CharField(
+        label="الاسم الأول",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    last_name = forms.CharField(
+        label="الاسم الأخير",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    phone = forms.CharField(
+        label="رقم الجوال",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    national_id = forms.CharField(
+        label="رقم الهوية / الإقامة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "dir": "ltr"}),
+    )
+    business_name = forms.CharField(
+        label="اسم المنشأة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    business_unified_number = forms.CharField(
+        label="الرقم الموحد للمنشأة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "dir": "ltr"}),
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "phone",
+            "national_id",
+            "business_name",
+            "business_unified_number",
+        ]
+
+    def clean_national_id(self):
+        national_id = (self.cleaned_data.get("national_id") or "").strip()
+        if national_id:
+            qs = User.objects.filter(national_id=national_id)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError("رقم الهوية / الإقامة مستخدم من قبل.")
+        return national_id
+
+    def clean_business_unified_number(self):
+        business_unified_number = (self.cleaned_data.get("business_unified_number") or "").strip()
+        if business_unified_number:
+            qs = User.objects.filter(business_unified_number=business_unified_number)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError("الرقم الموحد للمنشأة مستخدم من قبل.")
+        return business_unified_number
+
+
 class InstitutionForm(forms.ModelForm):
     name = forms.CharField(
         label="اسم المؤسسة",
