@@ -33,56 +33,123 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.contract_number.label }}</label>
                     {{ form.contract_number }}
+                    {% if form.contract_number.errors %}
+                        <div class="text-danger small mt-1">{{ form.contract_number.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.client.label }}</label>
                     {{ form.client }}
+                    <div class="form-text">
+                        يتم تعبئة هذا الحقل تلقائياً بعد التحقق إذا كانت بيانات العميل أو المنشأة مسجلة في المنصة.
+                    </div>
+                    {% if form.client.errors %}
+                        <div class="text-danger small mt-1">{{ form.client.errors }}</div>
+                    {% endif %}
                 </div>
 
-                <div class="col-md-6 mb-3">
+                <div class="col-12 mb-3">
                     <label class="form-label">{{ form.client_identifier.label }}</label>
-                    {{ form.client_identifier }}
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <div class="flex-grow-1">
+                            {{ form.client_identifier }}
+                        </div>
+
+                        <button type="submit" name="verify_client" value="1" class="btn btn-outline-primary">
+                            <i class="bi bi-search"></i>
+                            تحقق
+                        </button>
+                    </div>
+
+                    {% if form.client_identifier.help_text %}
+                        <div class="form-text">{{ form.client_identifier.help_text }}</div>
+                    {% else %}
+                        <div class="form-text">
+                            أدخل رقم هوية العميل أو الرقم الموحد للمنشأة ثم اضغط تحقق.
+                        </div>
+                    {% endif %}
+
+                    {% if verified_client %}
+                        <div class="alert alert-success mt-3 mb-0">
+                            <div><strong>اسم العميل:</strong> {{ verified_client }}</div>
+                            <div><strong>اسم المنشأة:</strong> {{ verified_business_name|default:"-" }}</div>
+                            <div><strong>نوع المطابقة:</strong> {{ verified_identifier_type }}</div>
+                        </div>
+                    {% endif %}
+
+                    {% if verify_error %}
+                        <div class="alert alert-danger mt-3 mb-0">
+                            {{ verify_error }}
+                        </div>
+                    {% endif %}
+
+                    {% if form.client_identifier.errors %}
+                        <div class="text-danger small mt-1">{{ form.client_identifier.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.second_party_name.label }}</label>
                     {{ form.second_party_name }}
+                    <div class="form-text">
+                        إذا كان الإدخال رقم المنشأة الموحد فسيكون الطرف الثاني هو اسم المنشأة، وإلا فسيكون اسم العميل.
+                    </div>
+                    {% if form.second_party_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.second_party_name.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.building_name.label }}</label>
                     {{ form.building_name }}
+                    {% if form.building_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.building_name.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.activity.label }}</label>
                     {{ form.activity }}
+                    {% if form.activity.errors %}
+                        <div class="text-danger small mt-1">{{ form.activity.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.duration_years.label }}</label>
                     {{ form.duration_years }}
+                    {% if form.duration_years.errors %}
+                        <div class="text-danger small mt-1">{{ form.duration_years.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ form.start_date.label }}</label>
                     {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.start_date.errors }}</div>
+                    {% endif %}
                 </div>
 
-                <!-- العنوان النصي -->
                 <div class="col-12 mb-3">
                     <label class="form-label">{{ form.building_location.label }}</label>
                     {{ form.building_location }}
+                    {% if form.building_location.errors %}
+                        <div class="text-danger small mt-1">{{ form.building_location.errors }}</div>
+                    {% endif %}
                 </div>
 
-                <!-- ✅ رابط جوجل فقط -->
                 <div class="col-12 mb-4">
                     <label class="form-label">{{ form.google_maps_url.label }}</label>
                     {{ form.google_maps_url }}
                     <div class="form-text">
-                        الصق رابط موقع المبنى من خرائط جوجل، وسيتم توليد الباركود تلقائياً.
+                        الصق رابط موقع المبنى من خرائط جوجل ليظهر رابط الموقع في الزيارة وسجل الزيارات.
                     </div>
+                    {% if form.google_maps_url.errors %}
+                        <div class="text-danger small mt-1">{{ form.google_maps_url.errors }}</div>
+                    {% endif %}
                 </div>
 
             </div>
@@ -94,26 +161,41 @@
                     {{ form.clause_templates.label }}
                 </label>
 
-                <div class="row">
-                    {% for checkbox in form.clause_templates %}
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check p-3 border rounded bg-light">
-                                {{ checkbox.tag }}
-                                <label class="form-check-label me-2">
-                                    {{ checkbox.choice_label }}
-                                </label>
+                {% if form.clause_templates.field.queryset %}
+                    <div class="row">
+                        {% for checkbox in form.clause_templates %}
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check p-3 border rounded bg-light">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label me-2">
+                                        {{ checkbox.choice_label }}
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning mb-0">
+                        لا توجد بنود افتراضية مضافة حالياً.
+                    </div>
+                {% endif %}
+
+                {% if form.clause_templates.errors %}
+                    <div class="text-danger small mt-1">{{ form.clause_templates.errors }}</div>
+                {% endif %}
             </div>
 
-            <button type="submit" class="btn btn-main">
-                {% if is_edit %}حفظ التعديلات{% else %}حفظ العقد{% endif %}
-            </button>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-main">
+                    {% if is_edit %}حفظ التعديلات{% else %}حفظ العقد{% endif %}
+                </button>
+
+                <a href="{% url 'contracts_list' %}" class="btn btn-outline-secondary">
+                    رجوع
+                </a>
+            </div>
 
         </form>
     </div>
 </div>
-
 {% endblock %}
