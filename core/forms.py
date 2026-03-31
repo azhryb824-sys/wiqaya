@@ -55,6 +55,16 @@ class RegisterForm(UserCreationForm):
         required=False,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    business_name = forms.CharField(
+        label="اسم المنشأة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    business_unified_number = forms.CharField(
+        label="الرقم الموحد للمنشأة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
     user_type = forms.ChoiceField(
         label="نوع المستخدم",
         choices=User.USER_TYPES,
@@ -80,6 +90,8 @@ class RegisterForm(UserCreationForm):
             "email",
             "phone",
             "national_id",
+            "business_name",
+            "business_unified_number",
             "user_type",
             "password1",
             "password2",
@@ -92,11 +104,16 @@ class RegisterForm(UserCreationForm):
         return username
 
     def clean_national_id(self):
-        national_id = self.cleaned_data.get("national_id")
-        if national_id:
-            if User.objects.filter(national_id=national_id).exists():
-                raise forms.ValidationError("رقم الهوية / السجل مستخدم مسبقاً")
+        national_id = (self.cleaned_data.get("national_id") or "").strip()
+        if national_id and User.objects.filter(national_id=national_id).exists():
+            raise forms.ValidationError("رقم الهوية / السجل مستخدم مسبقاً")
         return national_id
+
+    def clean_business_unified_number(self):
+        business_unified_number = (self.cleaned_data.get("business_unified_number") or "").strip()
+        if business_unified_number and User.objects.filter(business_unified_number=business_unified_number).exists():
+            raise forms.ValidationError("الرقم الموحد للمنشأة مستخدم مسبقاً")
+        return business_unified_number
 
 
 class CreateUserForm(UserCreationForm):
@@ -130,6 +147,16 @@ class CreateUserForm(UserCreationForm):
         required=False,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    business_name = forms.CharField(
+        label="اسم المنشأة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    business_unified_number = forms.CharField(
+        label="الرقم الموحد للمنشأة",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
     user_type = forms.ChoiceField(
         label="نوع المستخدم",
         choices=User.USER_TYPES,
@@ -155,6 +182,8 @@ class CreateUserForm(UserCreationForm):
             "email",
             "phone",
             "national_id",
+            "business_name",
+            "business_unified_number",
             "user_type",
             "password1",
             "password2",
@@ -167,11 +196,16 @@ class CreateUserForm(UserCreationForm):
         return username
 
     def clean_national_id(self):
-        national_id = self.cleaned_data.get("national_id")
-        if national_id:
-            if User.objects.filter(national_id=national_id).exists():
-                raise forms.ValidationError("رقم الهوية / السجل مستخدم مسبقاً")
+        national_id = (self.cleaned_data.get("national_id") or "").strip()
+        if national_id and User.objects.filter(national_id=national_id).exists():
+            raise forms.ValidationError("رقم الهوية / السجل مستخدم مسبقاً")
         return national_id
+
+    def clean_business_unified_number(self):
+        business_unified_number = (self.cleaned_data.get("business_unified_number") or "").strip()
+        if business_unified_number and User.objects.filter(business_unified_number=business_unified_number).exists():
+            raise forms.ValidationError("الرقم الموحد للمنشأة مستخدم مسبقاً")
+        return business_unified_number
 
 
 class InstitutionForm(forms.ModelForm):
