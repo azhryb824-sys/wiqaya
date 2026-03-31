@@ -4,7 +4,7 @@ from io import BytesIO
 import qrcode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from hijridate import Gregorian
@@ -183,6 +183,40 @@ def contract_list_view(request):
 
 
 @login_required
+def verify_client_identifier_view(request):
+    if not can_manage_contracts(request.user):
+        return JsonResponse({"success": False, "message": "غير مصرح لك"}, status=403)
+
+    institution = get_user_institution(request.user)
+    if not institution:
+        return JsonResponse({"success": False, "message": "يجب إنشاء مؤسسة أولاً"}, status=400)
+
+    identifier = (request.GET.get("identifier") or request.POST.get("identifier") or "").strip()
+
+    if not identifier:
+        return JsonResponse({"success": False, "message": "يرجى إدخال رقم الهوية أو الرقم الموحد"})
+
+    client, identifier_type = find_client_by_identifier(institution, identifier)
+
+    if not client:
+        return JsonResponse({"success": False, "message": "لا يوجد عميل أو منشأة مسجلة بهذا الرقم"})
+
+    second_party_name = get_second_party_name_for_client(client, identifier_type)
+    full_name = client.get_full_name().strip()
+    client_name = full_name if full_name else client.username
+
+    return JsonResponse({
+        "success": True,
+        "client_id": client.id,
+        "client_name": client_name,
+        "business_name": getattr(client, "business_name", "") or "",
+        "identifier_type": identifier_type,
+        "identifier_type_label": "رقم الهوية" if identifier_type == "national_id" else "الرقم الموحد للمنشأة",
+        "second_party_name": second_party_name,
+    })
+
+
+@login_required
 def contract_create_view(request):
     if not can_manage_contracts(request.user):
         return HttpResponseForbidden("غير مصرح لك")
@@ -217,8 +251,11 @@ def contract_create_view(request):
                     else "الرقم الموحد للمنشأة"
                 )
 
-                form.initial["client"] = client
-                form.initial["second_party_name"] = get_second_party_name_for_client(client, identifier_type)
+                mutable_data = request.POST.copy()
+                mutable_data["client"] = client.id
+                mutable_data["second_party_name"] = get_second_party_name_for_client(client, identifier_type)
+
+                form = MaintenanceContractForm(mutable_data, institution=institution)
             else:
                 verify_error = "لا يوجد عميل أو منشأة مسجلة بهذا الرقم"
 
