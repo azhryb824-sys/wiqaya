@@ -11,6 +11,18 @@
         طباعة الزيارة
     </a>
 
+    {% if request.user.user_type == "executive" and not visit.technician_approved and not visit.client_approved %}
+        <a href="{% url 'visit_edit' visit.id %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil-square"></i>
+            تعديل الزيارة
+        </a>
+
+        <a href="{% url 'visit_delete' visit.id %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash"></i>
+            حذف الزيارة
+        </a>
+    {% endif %}
+
     {% if request.user.user_type == "technician" and visit.technician == request.user %}
         <a href="{% url 'visit_add_note' visit.id %}" class="btn btn-outline-dark">
             <i class="bi bi-pencil-square"></i>
@@ -42,6 +54,12 @@
         سجل الزيارات
     </a>
 </div>
+
+{% if request.user.user_type == "executive" and (visit.technician_approved or visit.client_approved) %}
+<div class="alert alert-warning">
+    لا يمكن تعديل أو حذف هذه الزيارة بعد اعتمادها من الفني أو العميل.
+</div>
+{% endif %}
 
 <div class="panel-card">
     <div class="panel-card-body">
