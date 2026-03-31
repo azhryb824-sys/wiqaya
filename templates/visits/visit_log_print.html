@@ -44,6 +44,16 @@
             vertical-align: middle;
         }
         th { background: #f8f7f5; font-weight: 800; }
+
+        .location-box {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            line-height: 2;
+            font-size: 14px;
+        }
+
         @media print {
             body { background: #fff; padding: 0; }
             .print-actions { display: none; }
@@ -73,79 +83,68 @@
             <strong>الطرف الثاني:</strong> {{ contract.second_party_name }}<br>
             <strong>اسم المبنى:</strong> {{ contract.building_name }}
         </div>
-{% if contract.building_location %}
-<div style="border: 1px solid #ddd; border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
-    <div style="line-height: 2; font-size: 14px; word-break: break-word;">
-        <strong>موقع المبنى:</strong><br>
-        {{ contract.building_location }}
-    </div>
 
-    {% if building_location_qr %}
-    <div style="text-align: center;">
-        <img src="{{ building_location_qr }}" alt="QR Code" style="width: 110px; height: 110px;">
-        <div style="font-size: 12px; margin-top: 6px;">QR Code للموقع</div>
-    </div>
-    {% endif %}
-</div>
-{% endif %}
+        <!-- ✅ عرض رابط الموقع -->
+        {% if contract.google_maps_url %}
+        <div class="location-box">
+            <strong>رابط موقع المبنى:</strong><br>
+
+            <a href="{{ contract.google_maps_url }}" target="_blank">
+                {{ contract.google_maps_url }}
+            </a>
+        </div>
+        {% endif %}
+
         <table>
-    <thead>
-        <tr>
-            <th style="width: 10%;">التاريخ</th>
-            <th style="width: 12%;">الشهر الهجري</th>
-            <th style="width: 12%;">الفني</th>
-            <th style="width: 24%;">ملاحظات الفني</th>
-            <th style="width: 10%;">اعتماد الفني</th>
-            <th style="width: 10%;">اعتماد العميل</th>
-            <th style="width: 10%;">الحالة</th>
-            <th style="width: 12%;">توقيع الفني</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for visit in visits %}
-        <tr>
-            <td>{{ visit.visit_date }}</td>
-            <td>{{ visit.month_label|default:"-" }}</td>
-            <td>{{ visit.technician|default:"-" }}</td>
-            <td class="notes-cell">{{ visit.notes|default:"-" }}</td>
-            <td>
-                {% if visit.technician_approved %}
-                    تم
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-            <td>
-                {% if visit.client_approved %}
-                    تم
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-            <td>
-                {% if visit.technician_approved and visit.client_approved %}
-                    <span class="status-complete">مكتملة</span>
-                {% elif visit.technician_approved %}
-                    <span class="status-pending">بانتظار العميل</span>
-                {% else %}
-                    <span class="status-tech">بانتظار الفني</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if visit.technician_signature %}
-                    <img src="{{ visit.technician_signature }}" alt="توقيع الفني" style="max-width: 100px; max-height: 55px; object-fit: contain;">
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="8">لا توجد زيارات لهذا العقد</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">التاريخ</th>
+                    <th style="width: 12%;">الشهر الهجري</th>
+                    <th style="width: 12%;">الفني</th>
+                    <th style="width: 24%;">ملاحظات الفني</th>
+                    <th style="width: 10%;">اعتماد الفني</th>
+                    <th style="width: 10%;">اعتماد العميل</th>
+                    <th style="width: 10%;">الحالة</th>
+                    <th style="width: 12%;">توقيع الفني</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for visit in visits %}
+                <tr>
+                    <td>{{ visit.visit_date }}</td>
+                    <td>{{ visit.month_label|default:"-" }}</td>
+                    <td>{{ visit.technician|default:"-" }}</td>
+                    <td>{{ visit.notes|default:"-" }}</td>
+                    <td>
+                        {% if visit.technician_approved %}تم{% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if visit.client_approved %}تم{% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if visit.technician_approved and visit.client_approved %}
+                            مكتملة
+                        {% elif visit.technician_approved %}
+                            بانتظار العميل
+                        {% else %}
+                            بانتظار الفني
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if visit.technician_signature %}
+                            <img src="{{ visit.technician_signature }}" style="max-width: 100px;">
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">لا توجد زيارات لهذا العقد</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </body>
 </html>
