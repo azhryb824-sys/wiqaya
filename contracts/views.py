@@ -240,7 +240,8 @@ def contract_detail_view(request, contract_id):
 def contract_print_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
 
-    qr_code = build_qr_code_base64(contract.building_location)
+    qr_source = getattr(contract, "google_maps_url", None) or contract.building_location
+    qr_code = build_qr_code_base64(qr_source)
 
     context = {
         "contract": contract,
@@ -248,6 +249,7 @@ def contract_print_view(request, contract_id):
         "start_date_hijri": getattr(contract, "start_date_hijri", "") or format_hijri(contract.start_date),
         "end_date_hijri": getattr(contract, "end_date_hijri", "") or format_hijri(contract.end_date),
         "building_location_qr": qr_code,
+        "google_maps_url": getattr(contract, "google_maps_url", "") or "",
     }
     return render(request, "contracts/contract_print.html", context)
 
