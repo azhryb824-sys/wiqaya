@@ -32,6 +32,20 @@ class User(AbstractUser):
         verbose_name="رقم الهوية / السجل",
     )
 
+    business_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="اسم المنشأة",
+    )
+
+    business_unified_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="الرقم الموحد للمنشأة",
+    )
+
     must_change_password = models.BooleanField(
         default=False,
         verbose_name="يجب تغيير كلمة المرور",
@@ -58,6 +72,18 @@ class User(AbstractUser):
             phone = "966" + phone
 
         return phone
+
+    def get_display_name(self):
+        full_name = self.get_full_name().strip()
+        return full_name if full_name else self.username
+
+    def get_second_party_name_by_identifier(self, identifier):
+        identifier = (identifier or "").strip()
+
+        if self.business_unified_number and identifier == self.business_unified_number:
+            return self.business_name or self.get_display_name()
+
+        return self.get_display_name()
 
 
 class Institution(models.Model):
