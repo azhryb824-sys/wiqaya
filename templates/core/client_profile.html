@@ -1,0 +1,97 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}حسابي | منصة وقاية{% endblock %}
+{% block page_title %}حسابي{% endblock %}
+{% block page_subtitle %}تحديث بيانات العميل والمنشأة{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="panel-card">
+    <div class="panel-card-body">
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="row g-3">
+
+                <!-- الاسم الأول -->
+                <div class="col-md-6">
+                    <label class="form-label">الاسم الأول</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="text-danger small">{{ form.first_name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- الاسم الأخير -->
+                <div class="col-md-6">
+                    <label class="form-label">الاسم الأخير</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="text-danger small">{{ form.last_name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- رقم الجوال -->
+                <div class="col-md-6">
+                    <label class="form-label">رقم الجوال</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div class="text-danger small">{{ form.phone.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- رقم الهوية -->
+                <div class="col-md-6">
+                    <label class="form-label">رقم الهوية / الإقامة</label>
+                    {{ form.national_id }}
+                    {% if form.national_id.errors %}
+                        <div class="text-danger small">{{ form.national_id.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- اسم المنشأة -->
+                <div class="col-md-6">
+                    <label class="form-label">اسم المنشأة</label>
+                    {{ form.business_name }}
+                    {% if form.business_name.errors %}
+                        <div class="text-danger small">{{ form.business_name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- الرقم الموحد -->
+                <div class="col-md-6">
+                    <label class="form-label">الرقم الموحد للمنشأة</label>
+                    {{ form.business_unified_number }}
+                    {% if form.business_unified_number.errors %}
+                        <div class="text-danger small">{{ form.business_unified_number.errors }}</div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-main">
+                    <i class="bi bi-save"></i>
+                    حفظ البيانات
+                </button>
+
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                    رجوع
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
