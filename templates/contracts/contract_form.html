@@ -39,49 +39,14 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">{{ form.client.label }}</label>
-                    {{ form.client }}
-                    <div class="form-text">
-                        يتم تعبئة هذا الحقل تلقائياً بعد التحقق إذا كانت بيانات العميل أو المنشأة مسجلة في المنصة.
-                    </div>
-                    {% if form.client.errors %}
-                        <div class="text-danger small mt-1">{{ form.client.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-12 mb-3">
                     <label class="form-label">{{ form.client_identifier.label }}</label>
-
-                    <div class="d-flex gap-2 flex-wrap">
-                        <div class="flex-grow-1">
-                            {{ form.client_identifier }}
-                        </div>
-
-                        <button type="submit" name="verify_client" value="1" class="btn btn-outline-primary">
-                            <i class="bi bi-search"></i>
-                            تحقق
-                        </button>
-                    </div>
+                    {{ form.client_identifier }}
 
                     {% if form.client_identifier.help_text %}
                         <div class="form-text">{{ form.client_identifier.help_text }}</div>
                     {% else %}
                         <div class="form-text">
-                            أدخل رقم هوية العميل أو الرقم الموحد للمنشأة ثم اضغط تحقق.
-                        </div>
-                    {% endif %}
-
-                    {% if verified_client %}
-                        <div class="alert alert-success mt-3 mb-0">
-                            <div><strong>اسم العميل:</strong> {{ verified_client }}</div>
-                            <div><strong>اسم المنشأة:</strong> {{ verified_business_name|default:"-" }}</div>
-                            <div><strong>نوع المطابقة:</strong> {{ verified_identifier_type }}</div>
-                        </div>
-                    {% endif %}
-
-                    {% if verify_error %}
-                        <div class="alert alert-danger mt-3 mb-0">
-                            {{ verify_error }}
+                            أدخل رقم هوية العميل أو الرقم الموحد للمنشأة، وسيتم الربط تلقائياً عند حفظ العقد.
                         </div>
                     {% endif %}
 
@@ -94,7 +59,7 @@
                     <label class="form-label">{{ form.second_party_name.label }}</label>
                     {{ form.second_party_name }}
                     <div class="form-text">
-                        إذا كان الإدخال رقم المنشأة الموحد فسيكون الطرف الثاني هو اسم المنشأة، وإلا فسيكون اسم العميل.
+                        يُعبأ تلقائياً باسم المنشأة إذا كان الإدخال هو الرقم الموحد، أو باسم العميل إذا كان الإدخال هو رقم الهوية.
                     </div>
                     {% if form.second_party_name.errors %}
                         <div class="text-danger small mt-1">{{ form.second_party_name.errors }}</div>
