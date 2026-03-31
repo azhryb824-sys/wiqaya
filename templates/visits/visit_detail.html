@@ -6,21 +6,24 @@
 
 {% block dashboard_content %}
 <div class="d-flex gap-2 justify-content-end mb-3 flex-wrap">
+
     <a href="{% url 'visit_print' visit.id %}" target="_blank" class="btn btn-main">
         <i class="bi bi-printer"></i>
         طباعة الزيارة
     </a>
 
-    {% if request.user.user_type == "executive" and not visit.technician_approved and not visit.client_approved %}
-        <a href="{% url 'visit_edit' visit.id %}" class="btn btn-outline-primary">
-            <i class="bi bi-pencil-square"></i>
-            تعديل الزيارة
-        </a>
+    {% if request.user.user_type == "executive" %}
+        {% if not visit.technician_approved and not visit.client_approved %}
+            <a href="{% url 'visit_edit' visit.id %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil-square"></i>
+                تعديل الزيارة
+            </a>
 
-        <a href="{% url 'visit_delete' visit.id %}" class="btn btn-outline-danger">
-            <i class="bi bi-trash"></i>
-            حذف الزيارة
-        </a>
+            <a href="{% url 'visit_delete' visit.id %}" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i>
+                حذف الزيارة
+            </a>
+        {% endif %}
     {% endif %}
 
     {% if request.user.user_type == "technician" and visit.technician == request.user %}
@@ -55,8 +58,9 @@
     </a>
 </div>
 
-{% if request.user.user_type == "executive" and (visit.technician_approved or visit.client_approved) %}
-<div class="alert alert-warning">
+{% if request.user.user_type == "executive" and visit.technician_approved or request.user.user_type == "executive" and visit.client_approved %}
+<div class="alert alert-warning d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle"></i>
     لا يمكن تعديل أو حذف هذه الزيارة بعد اعتمادها من الفني أو العميل.
 </div>
 {% endif %}
@@ -64,6 +68,7 @@
 <div class="panel-card">
     <div class="panel-card-body">
         <div class="row g-4">
+
             <div class="col-md-6">
                 <strong>رقم العقد:</strong>
                 <div>{{ visit.contract.contract_number }}</div>
@@ -113,7 +118,8 @@
                 <strong>توقيع الفني الإلكتروني:</strong>
                 <div class="mt-2">
                     {% if visit.technician_signature %}
-                        <img src="{{ visit.technician_signature }}" alt="توقيع الفني" style="max-width: 220px; max-height: 100px; border: 1px solid #ddd; border-radius: 8px; background: #fff;">
+                        <img src="{{ visit.technician_signature }}" alt="توقيع الفني"
+                             style="max-width: 220px; max-height: 100px; border: 1px solid #ddd; border-radius: 8px; background: #fff;">
                     {% else %}
                         -
                     {% endif %}
@@ -153,16 +159,20 @@
             <div class="col-12">
                 <strong>رابط موقع المبنى:</strong>
                 <div class="mt-2 d-flex flex-column gap-2">
+
                     <a href="{{ visit.contract.google_maps_url }}" target="_blank" class="btn btn-outline-primary">
                         <i class="bi bi-geo-alt"></i>
                         فتح الموقع على الخرائط
                     </a>
+
                     <div dir="ltr" class="small text-muted" style="word-break: break-all;">
                         {{ visit.contract.google_maps_url }}
                     </div>
+
                 </div>
             </div>
             {% endif %}
+
         </div>
     </div>
 </div>
