@@ -25,13 +25,16 @@ class User(AbstractUser):
         help_text="مثال: 9665XXXXXXXX",
     )
 
+    # ✅ رقم الهوية (فريد)
     national_id = models.CharField(
         max_length=50,
         blank=True,
         null=True,
+        unique=True,
         verbose_name="رقم الهوية / السجل",
     )
 
+    # ✅ اسم المنشأة
     business_name = models.CharField(
         max_length=255,
         blank=True,
@@ -39,10 +42,12 @@ class User(AbstractUser):
         verbose_name="اسم المنشأة",
     )
 
+    # ✅ الرقم الموحد (فريد)
     business_unified_number = models.CharField(
         max_length=100,
         blank=True,
         null=True,
+        unique=True,
         verbose_name="الرقم الموحد للمنشأة",
     )
 
@@ -56,9 +61,11 @@ class User(AbstractUser):
         verbose_name_plural = "المستخدمون"
 
     def __str__(self):
-        full_name = self.get_full_name().strip()
-        return full_name if full_name else self.username
+        return self.get_display_name()
 
+    # =========================
+    # 📱 تنظيف رقم الجوال
+    # =========================
     def get_clean_phone(self):
         if not self.phone:
             return ""
@@ -73,17 +80,44 @@ class User(AbstractUser):
 
         return phone
 
+    # =========================
+    # 👤 اسم العرض
+    # =========================
     def get_display_name(self):
         full_name = self.get_full_name().strip()
         return full_name if full_name else self.username
 
+    # =========================
+    # 🏢 هل هذا الرقم هو رقم منشأة؟
+    # =========================
+    def is_business_identifier(self, identifier):
+        identifier = (identifier or "").strip()
+        return self.business_unified_number and identifier == self.business_unified_number
+
+    # =========================
+    # 🔥 تحديد اسم الطرف الثاني
+    # =========================
     def get_second_party_name_by_identifier(self, identifier):
         identifier = (identifier or "").strip()
 
-        if self.business_unified_number and identifier == self.business_unified_number:
+        # إذا كان الرقم الموحد → اسم المنشأة
+        if self.is_business_identifier(identifier):
             return self.business_name or self.get_display_name()
 
+        # غير ذلك → اسم العميل
         return self.get_display_name()
+
+    # =========================
+    # 🔍 هل الرقم يطابق المستخدم؟
+    # =========================
+    def matches_identifier(self, identifier):
+        identifier = (identifier or "").strip()
+
+        return (
+            (self.national_id and identifier == self.national_id)
+            or
+            (self.business_unified_number and identifier == self.business_unified_number)
+        )
 
 
 class Institution(models.Model):
