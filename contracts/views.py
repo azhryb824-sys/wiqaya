@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from hijridate import Gregorian
 
+from core.models import User
 from .forms import MaintenanceContractForm, ContractClauseTemplateForm
 from .models import ContractClauseTemplate, MaintenanceContract, MaintenanceContractClause
 
@@ -106,6 +107,7 @@ def find_client_by_identifier(institution, client_identifier):
     if not client_identifier:
         return None, None
 
+    # 1) البحث داخل المؤسسة أولاً
     client = institution.users.filter(
         user_type="client",
         national_id=client_identifier
@@ -118,6 +120,23 @@ def find_client_by_identifier(institution, client_identifier):
         business_unified_number=client_identifier
     ).first()
     if client:
+        return client, "business_unified_number"
+
+    # 2) البحث في كل النظام ثم ربطه بالمؤسسة تلقائياً
+    client = User.objects.filter(
+        user_type="client",
+        national_id=client_identifier
+    ).first()
+    if client:
+        institution.users.add(client)
+        return client, "national_id"
+
+    client = User.objects.filter(
+        user_type="client",
+        business_unified_number=client_identifier
+    ).first()
+    if client:
+        institution.users.add(client)
         return client, "business_unified_number"
 
     return None, None
@@ -210,6 +229,8 @@ def contract_create_view(request):
                 contract.second_party_name = get_second_party_name_for_client(client, identifier_type)
             else:
                 contract.second_party_name = ""
+                if client_identifier:
+                    messages.warning(request, "لا يوجد عميل أو منشأة بهذا الرقم")
 
             if hasattr(contract, "client_status") and not contract.client_status:
                 contract.client_status = "pending"
@@ -279,6 +300,8 @@ def contract_edit_view(request, contract_id):
                 contract.second_party_name = get_second_party_name_for_client(client, identifier_type)
             else:
                 contract.second_party_name = ""
+                if client_identifier:
+                    messages.warning(request, "لا يوجد عميل أو منشأة بهذا الرقم")
 
             if hasattr(contract, "client_status") and contract.client_status in ["rejected", "revision_requested"]:
                 contract.client_status = "pending"
