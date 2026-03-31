@@ -1,4 +1,7 @@
 from datetime import date
+from io import BytesIO
+import base64
+import qrcode
 
 from django.db import models
 from hijridate import Gregorian, Hijri
@@ -69,6 +72,7 @@ class MaintenanceContract(models.Model):
         unique=True,
         verbose_name="رقم العقد"
     )
+
     client = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -77,12 +81,14 @@ class MaintenanceContract(models.Model):
         related_name="client_contracts",
         verbose_name="العميل"
     )
+
     institution = models.ForeignKey(
         Institution,
         on_delete=models.CASCADE,
         related_name="contracts",
         verbose_name="المؤسسة"
     )
+
     executive = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -96,21 +102,45 @@ class MaintenanceContract(models.Model):
         max_length=255,
         verbose_name="اسم الطرف الثاني"
     )
+
     building_name = models.CharField(
         max_length=255,
         verbose_name="اسم المبنى"
     )
+
     activity = models.CharField(
         max_length=255,
         blank=True,
         null=True,
         verbose_name="النشاط"
     )
+
     building_location = models.TextField(
         blank=True,
         null=True,
-        verbose_name="موقع المبنى"
+        verbose_name="عنوان المبنى"
     )
+
+    # ✅ جديد: رابط خرائط جوجل
+    google_maps_url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name="رابط موقع المبنى في خرائط جوجل"
+    )
+
+    # ✅ جديد: الإحداثيات
+    latitude = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name="خط العرض"
+    )
+
+    longitude = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name="خط الطول"
+    )
+
     client_identifier = models.CharField(
         max_length=100,
         blank=True,
@@ -125,6 +155,7 @@ class MaintenanceContract(models.Model):
     )
 
     start_date = models.DateField(verbose_name="تاريخ البداية")
+
     end_date = models.DateField(
         blank=True,
         null=True,
@@ -137,6 +168,7 @@ class MaintenanceContract(models.Model):
         editable=False,
         verbose_name="تاريخ البداية هجري"
     )
+
     end_date_hijri = models.CharField(
         max_length=50,
         blank=True,
@@ -150,11 +182,13 @@ class MaintenanceContract(models.Model):
         default="pending",
         verbose_name="قرار العميل",
     )
+
     client_response_note = models.TextField(
         blank=True,
         null=True,
         verbose_name="ملاحظة العميل",
     )
+
     client_response_at = models.DateTimeField(
         blank=True,
         null=True,
@@ -171,6 +205,9 @@ class MaintenanceContract(models.Model):
     def __str__(self):
         return f"{self.contract_number} - {self.second_party_name}"
 
+    # =========================
+    # 📅 حساب التواريخ
+    # =========================
     def calculate_dates(self):
         if not self.start_date:
             return
@@ -197,6 +234,29 @@ class MaintenanceContract(models.Model):
             end_gregorian.month,
             end_gregorian.day
         )
+
+    # =========================
+    # 🔳 QR Code
+    # =========================
+    @property
+    def qr_code_base64(self):
+        if not self.google_maps_url:
+            return ""
+
+        qr = qrcode.QRCode(
+            version=1,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(self.google_maps_url)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+
+        return base64.b64encode(buffer.getvalue()).decode()
 
     def save(self, *args, **kwargs):
         self.calculate_dates()
