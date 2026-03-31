@@ -21,6 +21,7 @@ class MaintenanceContractForm(forms.ModelForm):
             "building_name",
             "activity",
             "building_location",
+            "google_maps_url",
             "duration_years",
             "start_date",
             "clause_templates",
@@ -33,6 +34,11 @@ class MaintenanceContractForm(forms.ModelForm):
             "building_name": forms.TextInput(attrs={"class": "form-control"}),
             "activity": forms.TextInput(attrs={"class": "form-control"}),
             "building_location": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "google_maps_url": forms.URLInput(attrs={
+                "class": "form-control",
+                "placeholder": "https://maps.google.com/...",
+                "dir": "ltr",
+            }),
             "duration_years": forms.Select(attrs={"class": "form-select"}),
             "start_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
         }
@@ -44,8 +50,12 @@ class MaintenanceContractForm(forms.ModelForm):
             "building_name": "اسم المبنى",
             "activity": "النشاط",
             "building_location": "موقع المبنى",
+            "google_maps_url": "رابط موقع المبنى في خرائط جوجل",
             "duration_years": "مدة العقد",
             "start_date": "تاريخ بداية العقد (ميلادي)",
+        }
+        help_texts = {
+            "google_maps_url": "أدخل رابط موقع المبنى من خرائط جوجل ليتم توليد الباركود تلقائياً.",
         }
 
     def __init__(self, *args, **kwargs):
@@ -69,6 +79,7 @@ class MaintenanceContractForm(forms.ModelForm):
         self.fields["client_identifier"].required = False
         self.fields["activity"].required = False
         self.fields["building_location"].required = False
+        self.fields["google_maps_url"].required = False
 
     def clean_contract_number(self):
         contract_number = self.cleaned_data["contract_number"]
@@ -80,6 +91,21 @@ class MaintenanceContractForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError("رقم العقد مستخدم من قبل.")
         return contract_number
+
+    def clean_google_maps_url(self):
+        google_maps_url = self.cleaned_data.get("google_maps_url")
+
+        if google_maps_url:
+            allowed_domains = [
+                "google.com",
+                "maps.google.com",
+                "maps.app.goo.gl",
+                "goo.gl",
+            ]
+            if not any(domain in google_maps_url for domain in allowed_domains):
+                raise forms.ValidationError("الرجاء إدخال رابط صحيح من خرائط جوجل.")
+
+        return google_maps_url
 
 
 class ContractClauseTemplateForm(forms.ModelForm):
