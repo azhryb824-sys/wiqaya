@@ -11,7 +11,13 @@ from hijridate import Gregorian
 from contracts.models import MaintenanceContract
 from visits.models import Visit
 
-from .forms import ArabicLoginForm, CreateUserForm, InstitutionForm, RegisterForm
+from .forms import (
+    ArabicLoginForm,
+    ClientProfileForm,
+    CreateUserForm,
+    InstitutionForm,
+    RegisterForm,
+)
 from .models import User
 
 
@@ -91,6 +97,29 @@ def register_view(request):
         messages.error(request, "تعذر إنشاء الحساب، راجع الأخطاء الظاهرة في النموذج")
 
     return render(request, "core/register.html", {"form": form})
+
+
+@login_required
+def client_profile_view(request):
+    form = ClientProfileForm(request.POST or None, instance=request.user)
+
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            messages.success(request, "تم تحديث بيانات الحساب بنجاح")
+            return redirect("client_profile")
+
+        print(form.errors)
+        messages.error(request, "تعذر تحديث بيانات الحساب، راجع الأخطاء الظاهرة في النموذج")
+
+    return render(
+        request,
+        "core/client_profile.html",
+        {
+            "form": form,
+            "user_type_label": "حسابي",
+        },
+    )
 
 
 @login_required
