@@ -101,32 +101,48 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="col-md-6">
-    <strong>اسم معتمد العميل:</strong>
-    <div>
-        {% if visit.client_approved and visit.contract.client %}
-            {{ visit.contract.client }}
-        {% else %}
-            -
-        {% endif %}
-    </div>
-</div>
 
-<div class="col-md-6">
-    <strong>وقت اعتماد العميل:</strong>
-    <div>
-        {% if visit.client_approved_at %}
-            {{ visit.client_approved_at|date:"Y-m-d H:i" }}
-        {% else %}
-            -
-        {% endif %}
-    </div>
-</div>
+            <div class="col-md-6">
+                <strong>اسم معتمد العميل:</strong>
+                <div>
+                    {% if visit.client_approved and visit.contract.client %}
+                        {{ visit.contract.client }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <strong>وقت اعتماد العميل:</strong>
+                <div>
+                    {% if visit.client_approved_at %}
+                        {{ visit.client_approved_at|date:"Y-m-d H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
 
             {% if visit.contract.building_location %}
             <div class="col-12">
-                <strong>موقع المبنى:</strong>
-                <div dir="ltr">{{ visit.contract.building_location }}</div>
+                <strong>عنوان المبنى:</strong>
+                <div>{{ visit.contract.building_location }}</div>
+            </div>
+            {% endif %}
+
+            {% if visit.contract.google_maps_url %}
+            <div class="col-12">
+                <strong>رابط موقع المبنى:</strong>
+                <div class="mt-2 d-flex flex-column gap-2">
+                    <a href="{{ visit.contract.google_maps_url }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="bi bi-geo-alt"></i>
+                        فتح الموقع على الخرائط
+                    </a>
+                    <div dir="ltr" class="small text-muted" style="word-break: break-all;">
+                        {{ visit.contract.google_maps_url }}
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
