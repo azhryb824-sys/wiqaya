@@ -21,3 +21,20 @@ def send_html_email(subject, to_emails, html_template, text_template=None, conte
     )
     msg.attach_alternative(html_body, "text/html")
     msg.send()
+    def send_contract_created_email(user, contract, action_url):
+    if not user.email:
+        return
+
+    send_html_email(
+        subject="تم إنشاء عقد صيانة جديد | منصة وقاية",
+        to_emails=[user.email],
+        html_template="emails/contract_created.html",
+        text_template="emails/contract_created.txt",
+        context={
+            "client_name": user.get_display_name(),
+            "contract_number": contract.contract_number,
+            "building_name": contract.building_name,
+            "building_location": contract.building_location,
+            "action_url": action_url,
+        },
+    )
