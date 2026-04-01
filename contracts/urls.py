@@ -6,7 +6,7 @@ urlpatterns = [
     path("create/", views.contract_create_view, name="contract_create"),
     path("<int:contract_id>/", views.contract_detail_view, name="contract_detail"),
     path("<int:contract_id>/edit/", views.contract_edit_view, name="contract_edit"),
-    path("<int:contract_id>/print/", views.contract_print_view, name="contract_print
+    path("<int:contract_id>/print/", views.contract_print_view, name="contract_print),
     path("contracts/<int:contract_id>/download-pdf/", views.contract_download_pdf_view, name="contract_download_pdf"),
     path("<int:contract_id>/delete/", views.contract_delete_view, name="contract_delete"),
 
