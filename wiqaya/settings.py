@@ -105,7 +105,7 @@ LOGOUT_REDIRECT_URL = "home"
 # إرسال البريد عبر SendGrid Web API بدل SMTP
 EMAIL_BACKEND = "core.email_backends.SendGridAPIEmailBackend"
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "azhryb824@gmail.com")
+DEFAULT_FROM_EMAIL = "Wiqaya Platform <azhryb824@gmail.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # مهم لتوليد روابط https بشكل صحيح على Railway
