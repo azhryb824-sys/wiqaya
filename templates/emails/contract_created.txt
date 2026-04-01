@@ -1,0 +1,12 @@
+مرحبًا {{ client_name }}
+
+تم إنشاء عقد صيانة جديد مرتبط بحسابك في منصة وقاية.
+
+رقم العقد: {{ contract_number }}
+اسم المبنى: {{ building_name }}
+{% if building_location %}موقع المبنى: {{ building_location }}{% endif %}
+
+لعرض التفاصيل:
+{{ action_url }}
+
+منصة وقاية
