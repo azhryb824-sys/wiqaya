@@ -1,0 +1,42 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}تمت إضافة زيارة جديدة | منصة وقاية{% endblock %}
+
+{% block content %}
+<h2 style="margin:0 0 14px; color:#1f2937; font-size:24px; font-weight:800;">
+    تمت إضافة زيارة جديدة
+</h2>
+
+<p style="margin:0 0 16px; color:#4b5563; font-size:15px; line-height:2;">
+    مرحبًا <strong>{{ recipient_name }}</strong>،
+    تم تسجيل زيارة جديدة في منصة وقاية مرتبطة بالعقد رقم <strong>{{ contract_number }}</strong>.
+</p>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:18px 0; background:#f9fafb; border:1px solid #eceff3; border-radius:14px;">
+    <tr>
+        <td style="padding:18px 20px;">
+            <div style="font-size:14px; color:#6b7280; margin-bottom:8px;">المبنى</div>
+            <div style="font-size:16px; color:#111827; font-weight:700;">{{ building_name }}</div>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:0 20px;"><div style="height:1px; background:#eceff3;"></div></td>
+    </tr>
+    <tr>
+        <td style="padding:18px 20px;">
+            <div style="font-size:14px; color:#6b7280; margin-bottom:8px;">تاريخ الزيارة</div>
+            <div style="font-size:16px; color:#111827; font-weight:700;">{{ visit_date }}</div>
+        </td>
+    </tr>
+</table>
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 22px;">
+    <tr>
+        <td align="center" bgcolor="#7a0f1d" style="border-radius:12px;">
+            <a href="{{ action_url }}" style="display:inline-block; padding:14px 24px; color:#ffffff; text-decoration:none; font-size:15px; font-weight:700;">
+                عرض تفاصيل الزيارة
+            </a>
+        </td>
+    </tr>
+</table>
+{% endblock %}
