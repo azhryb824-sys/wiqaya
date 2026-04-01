@@ -480,212 +480,23 @@ def contract_print_view(request, contract_id):
 @login_required
 def contract_download_pdf_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
-    institution = contract.institution
-    clauses = contract.clauses.all().order_by("order", "id")
+
+    context = {
+        "contract": contract,
+        "created_at_hijri": format_hijri(contract.created_at.date()),
+        "start_date_hijri": getattr(contract, "start_date_hijri", "") or format_hijri(contract.start_date),
+        "end_date_hijri": getattr(contract, "end_date_hijri", "") or format_hijri(contract.end_date),
+        "google_maps_url": getattr(contract, "google_maps_url", "") or "",
+    }
+
+    html_string = render_to_string("contracts/contract_print.html", context)
 
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="contract_{contract.contract_number}.pdf"'
 
-    pdf = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
+    HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf(response)
 
-    margin_top = 20 * mm
-    margin_bottom = 18 * mm
-    margin_right = width - 18 * mm
-    margin_left = 18 * mm
-
-    font_name = register_arabic_font()
-
-    contract_number = getattr(contract, "contract_number", "") or "-"
-    second_party_name = getattr(contract, "second_party_name", "") or "-"
-    building_name = getattr(contract, "building_name", "") or "-"
-    building_location = getattr(contract, "building_location", "") or "-"
-    created_at_hijri = format_hijri(contract.created_at.date()) if getattr(contract, "created_at", None) else "-"
-    start_date_hijri = getattr(contract, "start_date_hijri", "") or format_hijri(getattr(contract, "start_date", None))
-    end_date_hijri = getattr(contract, "end_date_hijri", "") or format_hijri(getattr(contract, "end_date", None))
-    institution_name = getattr(institution, "name", "") or "المؤسسة"
-    google_maps_url = getattr(contract, "google_maps_url", "") or ""
-
-    def draw_page_header():
-        y0 = height - margin_top
-
-        pdf.setLineWidth(1)
-        pdf.line(margin_left, y0, width - margin_left, y0)
-
-        y0 -= 10 * mm
-        draw_rtl_line(pdf, institution_name, margin_right, y0, font_name, 15)
-
-        y0 -= 8 * mm
-        draw_rtl_line(pdf, "عقد صيانة", margin_right, y0, font_name, 20)
-
-        y0 -= 10 * mm
-        pdf.setLineWidth(0.7)
-        pdf.line(margin_left, y0, width - margin_left, y0)
-
-        return y0 - 8 * mm
-
-    def new_page():
-        pdf.showPage()
-        pdf.setTitle(f"Contract {contract_number}")
-        return draw_page_header()
-
-    def ensure_space(y, needed=25 * mm):
-        if y < margin_bottom + needed:
-            return new_page()
-        return y
-
-    def draw_label_value(label, value, y, font_size=12):
-        draw_rtl_line(pdf, f"{label}: {value or '-'}", margin_right, y, font_name, font_size)
-
-    pdf.setTitle(f"Contract {contract_number}")
-    y = draw_page_header()
-
-    draw_rtl_line(pdf, "بيانات العقد", margin_right, y, font_name, 14)
-    y -= 8 * mm
-
-    info_lines = [
-        ("رقم العقد", contract_number),
-        ("تاريخ الإنشاء", created_at_hijri),
-        ("تاريخ بداية العقد", start_date_hijri),
-        ("تاريخ نهاية العقد", end_date_hijri),
-        ("الطرف الأول", institution_name),
-        ("الطرف الثاني", second_party_name),
-        ("اسم المبنى", building_name),
-        ("موقع المبنى", building_location),
-    ]
-
-    for label, value in info_lines:
-        y = ensure_space(y, 12 * mm)
-        draw_label_value(label, value, y, 12)
-        y -= 7 * mm
-
-    y -= 3 * mm
-    y = ensure_space(y, 35 * mm)
-
-    draw_rtl_line(pdf, "تمهيد", margin_right, y, font_name, 14)
-    y -= 8 * mm
-
-    intro_text = (
-        f"إنه في يوم {created_at_hijri} تم الاتفاق بين {institution_name} "
-        f"بصفته الطرف الأول، و {second_party_name} بصفته الطرف الثاني، "
-        f"وذلك بشأن أعمال الصيانة الدورية لوسائل السلامة الخاصة بالمبنى "
-        f"{building_name} الكائن في {building_location}، وفق البنود التالية:"
-    )
-    y = draw_wrapped_rtl(
-        pdf,
-        intro_text,
-        margin_right,
-        y,
-        font_name,
-        12,
-        max_chars=78,
-        line_height=18,
-    )
-
-    y -= 6 * mm
-    y = ensure_space(y, 25 * mm)
-
-    draw_rtl_line(pdf, "بنود العقد", margin_right, y, font_name, 14)
-    y -= 9 * mm
-
-    if not clauses.exists():
-        draw_rtl_line(pdf, "لا توجد بنود مضافة لهذا العقد.", margin_right, y, font_name, 12)
-        y -= 8 * mm
-    else:
-        for idx, clause in enumerate(clauses, start=1):
-            y = ensure_space(y, 22 * mm)
-
-            title = getattr(clause, "title", "") or f"البند {idx}"
-            content = getattr(clause, "content", "") or ""
-
-            draw_rtl_line(pdf, f"{idx}. {title}", margin_right, y, font_name, 13)
-            y -= 7 * mm
-
-            lines = wrap_text_ar(content, max_chars=82)
-            if not lines:
-                lines = ["-"]
-
-            for line in lines:
-                y = ensure_space(y, 10 * mm)
-                draw_rtl_line(pdf, line, margin_right - 4 * mm, y, font_name, 11)
-                y -= 6.5 * mm
-
-            y -= 2 * mm
-            pdf.setLineWidth(0.3)
-            pdf.line(margin_left + 8 * mm, y, width - margin_left - 8 * mm, y)
-            y -= 5 * mm
-
-    qr_source = google_maps_url or building_location
-    qr_buffer = build_qr_code_buffer(qr_source)
-
-    y = ensure_space(y, 45 * mm)
-
-    if google_maps_url:
-        draw_rtl_line(pdf, f"رابط الموقع: {google_maps_url}", margin_right, y, font_name, 10)
-        y -= 10 * mm
-
-    if qr_buffer:
-        try:
-            qr_image = ImageReader(qr_buffer)
-            pdf.drawImage(
-                qr_image,
-                margin_left,
-                y - 28 * mm,
-                width=26 * mm,
-                height=26 * mm,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-        except Exception:
-            pass
-
-    sign_y = max(margin_bottom + 18 * mm, 28 * mm)
-
-    pdf.setLineWidth(0.5)
-    pdf.line(width - 78 * mm, sign_y + 10 * mm, width - 38 * mm, sign_y + 10 * mm)
-    pdf.line(width - 160 * mm, sign_y + 10 * mm, width - 120 * mm, sign_y + 10 * mm)
-
-    draw_rtl_line(pdf, "الطرف الأول", width - 38 * mm, sign_y + 14 * mm, font_name, 12)
-    draw_rtl_line(pdf, "الطرف الثاني", width - 120 * mm, sign_y + 14 * mm, font_name, 12)
-
-    draw_rtl_line(pdf, institution_name, width - 38 * mm, sign_y + 3 * mm, font_name, 10)
-    draw_rtl_line(pdf, second_party_name, width - 120 * mm, sign_y + 3 * mm, font_name, 10)
-
-    try:
-        if getattr(institution, "signature", None) and institution.signature.path and os.path.exists(institution.signature.path):
-            pdf.drawImage(
-                institution.signature.path,
-                width - 108 * mm,
-                sign_y - 2 * mm,
-                width=24 * mm,
-                height=12 * mm,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-    except Exception:
-        pass
-
-    try:
-        if getattr(institution, "stamp", None) and institution.stamp.path and os.path.exists(institution.stamp.path):
-            pdf.drawImage(
-                institution.stamp.path,
-                width - 70 * mm,
-                sign_y - 8 * mm,
-                width=20 * mm,
-                height=20 * mm,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-    except Exception:
-        pass
-
-    pdf.setLineWidth(0.5)
-    pdf.line(margin_left, margin_bottom + 10 * mm, width - margin_left, margin_bottom + 10 * mm)
-    draw_rtl_line(pdf, f"رقم العقد: {contract_number}", margin_right, margin_bottom + 5 * mm, font_name, 9)
-
-    pdf.save()
     return response
-
 
 @login_required
 def contract_client_decision_view(request, contract_id):
