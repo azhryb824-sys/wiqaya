@@ -103,27 +103,13 @@ LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "home"
 
 # إعدادات البريد الإلكتروني
-# لو لم يتم ضبط EMAIL_HOST_USER و EMAIL_HOST_PASSWORD
-# سيتم استخدام console backend وسيظهر رابط إعادة التعيين في التيرمنال
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+# تم تعطيل SMTP مؤقتًا لتفادي انهيار التطبيق على Railway
+# وسيظهر رابط إعادة تعيين كلمة المرور في logs / terminal
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "azhryb824@gmail.com")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
-    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
-    EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
-    DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    EMAIL_HOST = "localhost"
-    EMAIL_PORT = 25
-    EMAIL_USE_TLS = False
-    EMAIL_USE_SSL = False
-    DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@wiqaya.local")
-
-# مهم جدًا لتوليد روابط إعادة التعيين بشكل صحيح على Railway/الإنتاج
+# مهم لتوليد روابط https بشكل صحيح على Railway
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
