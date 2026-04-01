@@ -6,10 +6,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import get_template
 from django.utils import timezone
 from hijridate import Gregorian
-from xhtml2pdf import pisa
 
 from core.models import User
 from .forms import MaintenanceContractForm, ContractClauseTemplateForm
@@ -109,7 +107,6 @@ def find_client_by_identifier(institution, client_identifier):
     if not client_identifier:
         return None, None
 
-    # 1) البحث داخل المؤسسة أولاً
     client = institution.users.filter(
         user_type="client",
         national_id=client_identifier
@@ -124,7 +121,6 @@ def find_client_by_identifier(institution, client_identifier):
     if client:
         return client, "business_unified_number"
 
-    # 2) البحث في كل النظام ثم ربطه بالمؤسسة تلقائياً
     client = User.objects.filter(
         user_type="client",
         national_id=client_identifier
@@ -385,33 +381,9 @@ def contract_print_view(request, contract_id):
 @login_required
 def contract_download_pdf_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
-
-    qr_source = getattr(contract, "google_maps_url", None) or contract.building_location
-    qr_code = build_qr_code_base64(qr_source)
-
-    context = {
-        "contract": contract,
-        "created_at_hijri": format_hijri(contract.created_at.date()),
-        "start_date_hijri": getattr(contract, "start_date_hijri", "") or format_hijri(contract.start_date),
-        "end_date_hijri": getattr(contract, "end_date_hijri", "") or format_hijri(contract.end_date),
-        "building_location_qr": qr_code,
-        "google_maps_url": getattr(contract, "google_maps_url", "") or "",
-        "download_mode": True,
-    }
-
-    template = get_template("contracts/contract_print.html")
-    html = template.render(context, request)
-
-    result = BytesIO()
-    pdf = pisa.pisaDocument(BytesIO(html.encode("utf-8")), result)
-
-    if pdf.err:
-        return HttpResponse("حدث خطأ أثناء إنشاء ملف PDF", status=500)
-
-    filename = f"contract_{contract.contract_number}.pdf"
-    response = HttpResponse(result.getvalue(), content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
-    return response
+    return HttpResponse(
+        f"ميزة تنزيل PDF متوقفة مؤقتاً لهذا العقد رقم {contract.contract_number} حتى يتم اعتماد طريقة متوافقة مع الخادم."
+    )
 
 
 @login_required
