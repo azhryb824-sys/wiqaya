@@ -19,6 +19,13 @@
                     <form method="post">
                         {% csrf_token %}
                         {{ form.as_p }}
+
+                        <div class="text-start mb-3">
+                            <a href="{% url 'password_reset' %}" class="text-decoration-none">
+                                نسيت كلمة المرور؟
+                            </a>
+                        </div>
+
                         <button type="submit" class="btn btn-main w-100">دخول</button>
                     </form>
 
