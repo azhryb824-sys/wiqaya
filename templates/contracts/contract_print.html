@@ -360,9 +360,16 @@
 <body>
 
     <div class="screen-toolbar">
-        <a href="{% url 'contract_detail' contract.id %}" class="back-btn">رجوع</a>
-        <button type="button" class="print-btn" onclick="window.print()">طباعة العقد</button>
-    </div>
+    <a href="{% url 'contract_detail' contract.id %}" class="back-btn">رجوع</a>
+
+    <button type="button" class="print-btn" onclick="window.print()">
+        طباعة العقد
+    </button>
+
+    <a href="{% url 'contract_download_pdf' contract.id %}" class="pdf-btn">
+        تنزيل الملف PDF
+    </a>
+</div>
 
     <div class="a4-wrapper">
         <div class="page">
