@@ -1,0 +1,7 @@
+تم تحديث عقدك
+
+رقم العقد: {{ contract_number }}
+المبنى: {{ building_name }}
+
+عرض العقد:
+{{ action_url }}
