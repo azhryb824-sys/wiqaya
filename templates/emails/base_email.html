@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block email_title %}منصة وقاية{% endblock %}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Tahoma, Arial, sans-serif; direction:rtl; text-align:right;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f4f6f8; margin:0; padding:24px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:680px; background:#ffffff; border-radius:18px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.08);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#7a0f1d,#a3162b); padding:28px 32px; color:#ffffff;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="font-size:28px; font-weight:800; letter-spacing:0.3px;">
+                                        منصة وقاية
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top:8px; font-size:14px; color:rgba(255,255,255,0.88);">
+                                        إدارة عقود الصيانة، الشهادات، وسجل الزيارات باحترافية
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:34px 32px 20px;">
+                            {% block content %}{% endblock %}
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:0 32px 32px;">
+                            <div style="border-top:1px solid #eceff3; padding-top:18px; font-size:13px; color:#7b8591; line-height:1.9;">
+                                هذه رسالة آلية من <strong style="color:#7a0f1d;">منصة وقاية</strong>، الرجاء عدم الرد عليها مباشرة.
+                                <br>
+                                في حال احتجت المساعدة، يرجى التواصل عبر القنوات الرسمية للمنصة.
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Bottom note -->
+                    <tr>
+                        <td style="background:#fafbfc; padding:16px 32px; font-size:12px; color:#98a2ad; text-align:center;">
+                            © {% now "Y" %} منصة وقاية - جميع الحقوق محفوظة
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
