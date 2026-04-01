@@ -203,6 +203,31 @@ def send_contract_created_email(request, user, contract):
     )
 
 
+def send_contract_updated_email(request, user, contract):
+    if not user or not user.email:
+        return
+
+    action_url = request.build_absolute_uri(
+        reverse("contract_detail", args=[contract.id])
+    )
+
+    context = {
+        "client_name": user.get_display_name(),
+        "contract_number": contract.contract_number,
+        "building_name": contract.building_name,
+        "building_location": contract.building_location,
+        "action_url": action_url,
+    }
+
+    send_html_email(
+        subject="تم تحديث عقدك | منصة وقاية",
+        to_emails=[user.email],
+        html_template="emails/contract_updated.html",
+        text_template="emails/contract_updated.txt",
+        context=context,
+    )
+
+
 def is_executive(user):
     return user.is_authenticated and user.user_type == "executive"
 
@@ -474,6 +499,16 @@ def contract_edit_view(request, contract_id):
                     content=template.content,
                     order=template.order,
                 )
+
+            if contract.client:
+                if contract.client.email:
+                    try:
+                        send_contract_updated_email(request, contract.client, contract)
+                    except Exception as exc:
+                        print("Contract update email error:", exc)
+                        messages.warning(request, "تم تعديل العقد لكن تعذر إرسال إشعار العميل")
+                else:
+                    messages.warning(request, "تم تعديل العقد لكن العميل لا يملك بريد إلكتروني")
 
             messages.success(request, "تم تعديل العقد بنجاح")
             return redirect("contract_detail", contract_id=contract.id)
