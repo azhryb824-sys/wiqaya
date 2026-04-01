@@ -102,10 +102,9 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "home"
 
-# إعدادات البريد الإلكتروني
-# تم تعطيل SMTP مؤقتًا لتفادي انهيار التطبيق على Railway
-# وسيظهر رابط إعادة تعيين كلمة المرور في logs / terminal
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# إرسال البريد عبر SendGrid Web API بدل SMTP
+EMAIL_BACKEND = "core.email_backends.SendGridAPIEmailBackend"
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "azhryb824@gmail.com")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
