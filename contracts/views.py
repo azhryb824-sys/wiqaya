@@ -1,13 +1,23 @@
 import base64
+import os
 from io import BytesIO
 
+import arabic_reshaper
 import qrcode
+from bidi.algorithm import get_display
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from hijridate import Gregorian
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 
 from core.models import User
 from .forms import MaintenanceContractForm, ContractClauseTemplateForm
@@ -51,6 +61,85 @@ def build_qr_code_base64(data):
     img.save(buffer, format="PNG")
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return f"data:image/png;base64,{encoded}"
+
+
+def build_qr_code_buffer(data):
+    if not data:
+        return None
+
+    qr = qrcode.QRCode(version=1, box_size=8, border=2)
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer
+
+
+def reshape_arabic_text(text):
+    text = str(text or "")
+    if not text:
+        return ""
+    reshaped = arabic_reshaper.reshape(text)
+    return get_display(reshaped)
+
+
+def register_arabic_font():
+    possible_paths = [
+        os.path.join(settings.BASE_DIR, "static", "fonts", "Cairo-Regular.ttf"),
+        os.path.join(settings.BASE_DIR, "static", "fonts", "DejaVuSans.ttf"),
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    ]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont("ArabicFont", path))
+                return "ArabicFont"
+            except Exception:
+                continue
+
+    return "Helvetica"
+
+
+def wrap_text_ar(text, max_chars=70):
+    text = str(text or "").strip()
+    if not text:
+        return []
+
+    words = text.split()
+    lines = []
+    current = ""
+
+    for word in words:
+        test_line = f"{current} {word}".strip()
+        if len(test_line) <= max_chars:
+            current = test_line
+        else:
+            if current:
+                lines.append(current)
+            current = word
+
+    if current:
+        lines.append(current)
+
+    return lines
+
+
+def draw_rtl_line(pdf, text, x_right, y, font_name="Helvetica", font_size=12):
+    pdf.setFont(font_name, font_size)
+    pdf.drawRightString(x_right, y, reshape_arabic_text(text))
+
+
+def draw_wrapped_rtl(pdf, text, x_right, y, font_name="Helvetica", font_size=12, max_chars=70, line_height=18):
+    lines = wrap_text_ar(text, max_chars=max_chars)
+    for line in lines:
+        draw_rtl_line(pdf, line, x_right, y, font_name, font_size)
+        y -= line_height
+    return y
 
 
 def is_executive(user):
@@ -381,9 +470,151 @@ def contract_print_view(request, contract_id):
 @login_required
 def contract_download_pdf_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
-    return HttpResponse(
-        f"ميزة تنزيل PDF متوقفة مؤقتاً لهذا العقد رقم {contract.contract_number} حتى يتم اعتماد طريقة متوافقة مع الخادم."
+    institution = contract.institution
+    clauses = contract.clauses.all().order_by("order", "id")
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="contract_{contract.contract_number}.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+    margin_right = width - 20 * mm
+    margin_left = 20 * mm
+    y = height - 20 * mm
+
+    font_name = register_arabic_font()
+
+    def new_page():
+        pdf.showPage()
+        return height - 20 * mm
+
+    pdf.setTitle(f"Contract {contract.contract_number}")
+    draw_rtl_line(pdf, "عقد صيانة", margin_right, y, font_name, 18)
+    y -= 12 * mm
+
+    contract_number = getattr(contract, "contract_number", "") or "-"
+    second_party_name = getattr(contract, "second_party_name", "") or "-"
+    building_name = getattr(contract, "building_name", "") or "-"
+    building_location = getattr(contract, "building_location", "") or "-"
+    created_at_hijri = format_hijri(contract.created_at.date()) if getattr(contract, "created_at", None) else "-"
+    start_date_hijri = getattr(contract, "start_date_hijri", "") or format_hijri(getattr(contract, "start_date", None))
+    end_date_hijri = getattr(contract, "end_date_hijri", "") or format_hijri(getattr(contract, "end_date", None))
+    institution_name = getattr(institution, "name", "") or "المؤسسة"
+
+    info_lines = [
+        f"رقم العقد: {contract_number}",
+        f"تاريخ الإنشاء: {created_at_hijri}",
+        f"تاريخ بداية العقد: {start_date_hijri}",
+        f"تاريخ نهاية العقد: {end_date_hijri}",
+        f"الطرف الأول: {institution_name}",
+        f"الطرف الثاني: {second_party_name}",
+        f"اسم المبنى: {building_name}",
+        f"موقع المبنى: {building_location}",
+    ]
+
+    for line in info_lines:
+        draw_rtl_line(pdf, line, margin_right, y, font_name, 12)
+        y -= 8 * mm
+        if y < 40 * mm:
+            y = new_page()
+
+    y -= 4 * mm
+
+    intro_text = (
+        f"أنه في يوم {created_at_hijri} تم الاتفاق بين {institution_name} "
+        f"و {second_party_name} على أعمال الصيانة الدورية لوسائل السلامة بالمبنى "
+        f"\"{building_name}\" الكائن في \"{building_location}\"."
     )
+    y = draw_wrapped_rtl(pdf, intro_text, margin_right, y, font_name, 12, max_chars=75, line_height=18)
+    y -= 6 * mm
+
+    draw_rtl_line(pdf, "بنود العقد", margin_right, y, font_name, 15)
+    y -= 10 * mm
+
+    for idx, clause in enumerate(clauses, start=1):
+        title = getattr(clause, "title", "") or f"البند {idx}"
+        content = getattr(clause, "content", "") or ""
+
+        block_title = f"{idx}- {title}"
+        draw_rtl_line(pdf, block_title, margin_right, y, font_name, 13)
+        y -= 7 * mm
+
+        content_lines = wrap_text_ar(content, max_chars=80)
+        for line in content_lines:
+            draw_rtl_line(pdf, line, margin_right - 5 * mm, y, font_name, 11)
+            y -= 6.5 * mm
+
+            if y < 35 * mm:
+                y = new_page()
+
+        y -= 4 * mm
+        if y < 35 * mm:
+            y = new_page()
+
+    google_maps_url = getattr(contract, "google_maps_url", "") or ""
+    qr_source = google_maps_url or building_location
+    qr_buffer = build_qr_code_buffer(qr_source)
+
+    if y < 65 * mm:
+        y = new_page()
+
+    if google_maps_url:
+        draw_rtl_line(pdf, f"رابط الموقع: {google_maps_url}", margin_right, y, font_name, 10)
+        y -= 10 * mm
+
+    if qr_buffer:
+        try:
+            qr_image = ImageReader(qr_buffer)
+            pdf.drawImage(
+                qr_image,
+                margin_left,
+                y - 30 * mm,
+                width=28 * mm,
+                height=28 * mm,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+        except Exception:
+            pass
+
+    y_sign = 35 * mm
+
+    draw_rtl_line(pdf, "الطرف الأول", width - 50 * mm, y_sign, font_name, 12)
+    draw_rtl_line(pdf, "الطرف الثاني", width - 130 * mm, y_sign, font_name, 12)
+
+    draw_rtl_line(pdf, institution_name, width - 50 * mm, y_sign - 8 * mm, font_name, 11)
+    draw_rtl_line(pdf, second_party_name, width - 130 * mm, y_sign - 8 * mm, font_name, 11)
+
+    try:
+        if getattr(institution, "stamp", None) and institution.stamp.path and os.path.exists(institution.stamp.path):
+            pdf.drawImage(
+                institution.stamp.path,
+                width - 75 * mm,
+                10 * mm,
+                width=22 * mm,
+                height=22 * mm,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+    except Exception:
+        pass
+
+    try:
+        if getattr(institution, "signature", None) and institution.signature.path and os.path.exists(institution.signature.path):
+            pdf.drawImage(
+                institution.signature.path,
+                width - 110 * mm,
+                10 * mm,
+                width=30 * mm,
+                height=15 * mm,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+    except Exception:
+        pass
+
+    pdf.save()
+    return response
 
 
 @login_required
