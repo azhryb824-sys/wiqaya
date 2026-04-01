@@ -13,10 +13,11 @@ class SendGridAPIEmailBackend(BaseEmailBackend):
 
     def send_messages(self, email_messages):
         if not email_messages:
+            print("SENDGRID: لا توجد رسائل للإرسال")
             return 0
 
         if not self.api_key:
-            raise ValueError("SENDGRID_API_KEY غير مضبوط")
+            raise ValueError("SENDGRID_API_KEY غير مضبوط في settings أو Railway Variables")
 
         client = SendGridAPIClient(self.api_key)
         sent_count = 0
@@ -54,7 +55,12 @@ class SendGridAPIEmailBackend(BaseEmailBackend):
             if reply_to:
                 mail.reply_to = sanitize_address(reply_to[0], "utf-8")
 
+            print("SENDGRID FROM:", from_email)
+            print("SENDGRID TO:", message.to)
+            print("SENDGRID SUBJECT:", message.subject)
+
             response = client.send(mail)
+
             print("SENDGRID STATUS:", response.status_code)
             print("SENDGRID BODY:", response.body)
             print("SENDGRID HEADERS:", response.headers)
