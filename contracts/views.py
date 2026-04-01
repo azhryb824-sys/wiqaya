@@ -8,8 +8,11 @@ from bidi.algorithm import get_display
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from hijridate import Gregorian
 from reportlab.lib.pagesizes import A4
@@ -150,6 +153,54 @@ def draw_wrapped_rtl(pdf, text, x_right, y, font_name="Helvetica", font_size=12,
         draw_rtl_line(pdf, line, x_right, y, font_name, font_size)
         y -= line_height
     return y
+
+
+def send_html_email(subject, to_emails, html_template, text_template=None, context=None):
+    context = context or {}
+
+    if not to_emails:
+        return
+
+    html_body = render_to_string(html_template, context)
+
+    if text_template:
+        text_body = render_to_string(text_template, context)
+    else:
+        text_body = "هذه رسالة آلية من منصة وقاية."
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=to_emails,
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send()
+
+
+def send_contract_created_email(request, user, contract):
+    if not user or not user.email:
+        return
+
+    action_url = request.build_absolute_uri(
+        reverse("contract_detail", args=[contract.id])
+    )
+
+    context = {
+        "client_name": user.get_display_name(),
+        "contract_number": contract.contract_number,
+        "building_name": contract.building_name,
+        "building_location": contract.building_location,
+        "action_url": action_url,
+    }
+
+    send_html_email(
+        subject="تم إنشاء عقد صيانة جديد | منصة وقاية",
+        to_emails=[user.email],
+        html_template="emails/contract_created.html",
+        text_template="emails/contract_created.txt",
+        context=context,
+    )
 
 
 def is_executive(user):
@@ -343,6 +394,12 @@ def contract_create_view(request):
                     order=template.order,
                 )
 
+            if contract.client and contract.client.email:
+                try:
+                    send_contract_created_email(request, contract.client, contract)
+                except Exception as exc:
+                    print(f"Contract email error: {exc}")
+
             messages.success(request, "تم إنشاء العقد بنجاح")
             return redirect("contracts_list")
 
@@ -494,9 +551,15 @@ def contract_download_pdf_view(request, contract_id):
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="contract_{contract.contract_number}.pdf"'
 
-    HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf(response)
+    try:
+        from weasyprint import HTML
+        HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf(response)
+    except Exception:
+        messages.error(request, "تعذر إنشاء ملف PDF. تأكد من تثبيت مكتبة weasyprint")
+        return redirect("contract_detail", contract_id=contract.id)
 
     return response
+
 
 @login_required
 def contract_client_decision_view(request, contract_id):
