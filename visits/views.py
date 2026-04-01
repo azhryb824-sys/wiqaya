@@ -2,9 +2,13 @@ import base64
 from io import BytesIO
 
 import qrcode
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 
 from contracts.models import MaintenanceContract
@@ -29,6 +33,54 @@ def build_qr_code_base64(data):
     img.save(buffer, format="PNG")
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return f"data:image/png;base64,{encoded}"
+
+
+def send_html_email(subject, to_emails, html_template, text_template=None, context=None):
+    context = context or {}
+
+    if not to_emails:
+        return
+
+    html_body = render_to_string(html_template, context)
+
+    if text_template:
+        text_body = render_to_string(text_template, context)
+    else:
+        text_body = "هذه رسالة آلية من منصة وقاية."
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=to_emails,
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send()
+
+
+def send_technician_notification(request, technician, visit):
+    if not technician or not technician.email:
+        return
+
+    action_url = request.build_absolute_uri(
+        reverse("visit_detail", args=[visit.id])
+    )
+
+    context = {
+        "technician_name": technician.get_display_name(),
+        "visit_date": visit.visit_date,
+        "contract_number": visit.contract.contract_number,
+        "building_name": visit.contract.building_name,
+        "action_url": action_url,
+    }
+
+    send_html_email(
+        subject="تم تعيين زيارة جديدة لك | منصة وقاية",
+        to_emails=[technician.email],
+        html_template="emails/technician_visit.html",
+        text_template="emails/technician_visit.txt",
+        context=context,
+    )
 
 
 def _get_user_institution(user):
@@ -130,6 +182,14 @@ def visit_create_view(request):
                 return render(request, "visits/visit_form.html", {"form": form})
 
             visit.save()
+
+            if visit.technician:
+                try:
+                    send_technician_notification(request, visit.technician, visit)
+                except Exception as exc:
+                    print("Technician email error:", exc)
+                    messages.warning(request, "تم إنشاء الزيارة لكن تعذر إرسال إشعار الفني")
+
             messages.success(request, "تم إنشاء الزيارة")
             return redirect("visit_list")
 
@@ -251,10 +311,20 @@ def visit_edit_view(request, visit_id):
         messages.error(request, "لا يمكن تعديل الزيارة بعد اعتمادها")
         return redirect("visit_detail", visit_id=visit.id)
 
+    old_technician_id = visit.technician_id
+
     form = VisitForm(request.POST or None, instance=visit)
 
     if request.method == "POST" and form.is_valid():
-        form.save()
+        visit = form.save()
+
+        if visit.technician and visit.technician_id != old_technician_id:
+            try:
+                send_technician_notification(request, visit.technician, visit)
+            except Exception as exc:
+                print("Technician email error:", exc)
+                messages.warning(request, "تم تعديل الزيارة لكن تعذر إرسال إشعار الفني")
+
         messages.success(request, "تم التعديل")
         return redirect("visit_detail", visit_id=visit.id)
 
