@@ -19,7 +19,10 @@ from .forms import (
     RegisterForm,
 )
 from .models import User
+from django.shortcuts import render
 
+def subscription_terms_view(request):
+    return render(request, "core/subscription_terms.html")
 
 ARABIC_HIJRI_MONTHS = {
     1: "محرم",
