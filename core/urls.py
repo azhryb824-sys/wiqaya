@@ -81,4 +81,5 @@ urlpatterns = [
     # عروض الأسعار
     # =========================
     path("quotations/", include("quotations.urls")),
+    path("subscription-terms/", views.subscription_terms_view, name="subscription_terms"),
 ]
