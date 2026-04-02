@@ -9,10 +9,15 @@ urlpatterns = [
     # =========================
     path("", views.home_view, name="home"),
     path("login/", CustomLoginView.as_view(), name="login"),
-    
     path("register/", views.register_view, name="register"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
     path("logout/", views.logout_view, name="logout"),
+
+    # =========================
+    # الصفحات العامة
+    # =========================
+    path("terms/", views.terms_view, name="terms"),
+    path("subscription-terms/", views.subscription_terms_view, name="subscription_terms"),
 
     # =========================
     # استعادة كلمة المرور
@@ -24,7 +29,6 @@ urlpatterns = [
         ),
         name="password_reset"
     ),
-
     path(
         "password-reset/done/",
         auth_views.PasswordResetDoneView.as_view(
@@ -32,7 +36,6 @@ urlpatterns = [
         ),
         name="password_reset_done"
     ),
-
     path(
         "reset/<uidb64>/<token>/",
         auth_views.PasswordResetConfirmView.as_view(
@@ -40,7 +43,6 @@ urlpatterns = [
         ),
         name="password_reset_confirm"
     ),
-
     path(
         "reset/done/",
         auth_views.PasswordResetCompleteView.as_view(
@@ -81,5 +83,4 @@ urlpatterns = [
     # عروض الأسعار
     # =========================
     path("quotations/", include("quotations.urls")),
-    path("subscription-terms/", views.subscription_terms_view, name="subscription_terms"),
 ]
