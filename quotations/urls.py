@@ -1,6 +1,9 @@
 from django.urls import path
 from . import views
 
+# 🔥 مهم جداً عشان namespace
+app_name = "quotations"
+
 urlpatterns = [
     path("", views.quotation_list_view, name="quotation_list"),
     path("create/", views.quotation_create_view, name="quotation_create"),
