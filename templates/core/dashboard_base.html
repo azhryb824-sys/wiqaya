@@ -62,38 +62,43 @@
                 <span>المستخدمون</span>
             </a>
 
-            <!-- ✅ تم الإصلاح هنا -->
+            <!-- العقود -->
             <a href="{% url 'contracts:contracts_list' %}"
                class="sidebar-link {% if '/contracts' in request.path %}active{% endif %}">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>العقود</span>
             </a>
 
+            <!-- بنود العقود -->
             <a href="{% url 'contracts:clause_template_list' %}"
                class="sidebar-link {% if '/clauses' in request.path %}active{% endif %}">
                 <i class="bi bi-card-list"></i>
                 <span>بنود العقود</span>
             </a>
 
+            <!-- الشهادات -->
             <a href="{% url 'certificates:certificate_list' %}"
                class="sidebar-link {% if '/certificates' in request.path %}active{% endif %}">
                 <i class="bi bi-patch-check"></i>
                 <span>الشهادات</span>
             </a>
 
+            <!-- بنود الشهادات -->
             <a href="{% url 'certificates:certificate_clause_list' %}"
                class="sidebar-link {% if '/certificate' in request.path %}active{% endif %}">
                 <i class="bi bi-card-checklist"></i>
                 <span>بنود الشهادات</span>
             </a>
 
+            <!-- الزيارات -->
             <a href="{% url 'visits:visit_list' %}"
                class="sidebar-link {% if '/visits' in request.path %}active{% endif %}">
                 <i class="bi bi-calendar2-check"></i>
                 <span>الزيارات</span>
             </a>
 
-            <a href="{% url 'quotation_list' %}"
+            <!-- ✅ تم الإصلاح النهائي هنا -->
+            <a href="{% url 'quotations:quotation_list' %}"
                class="sidebar-link {% if '/quotations' in request.path %}active{% endif %}">
                 <i class="bi bi-receipt"></i>
                 <span>عروض الأسعار</span>
@@ -122,7 +127,6 @@
                 </p>
             </div>
 
-            <!-- ✅ زر تم إصلاحه -->
             <div>
                 <a href="{% url 'contracts:contract_create' %}" class="btn btn-main">
                     <i class="bi bi-plus-circle"></i> عقد جديد
