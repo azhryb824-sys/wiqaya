@@ -10,4 +10,5 @@ urlpatterns = [
 
     path("clauses/", views.certificate_clause_template_list_view, name="certificate_clause_list"),
     path("clauses/create/", views.certificate_clause_template_create_view, name="certificate_clause_create"),
+    path("<int:certificate_id>/download/", views.certificate_download_pdf_view, name="certificate_download"),
 ]
