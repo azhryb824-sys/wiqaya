@@ -1,6 +1,9 @@
 from django.urls import path
 from . import views
 
+# 🔥 مهم جداً
+app_name = "certificates"
+
 urlpatterns = [
     # -----------------------------
     # الشهادات
@@ -16,7 +19,7 @@ urlpatterns = [
     path("<int:certificate_id>/", views.certificate_detail_view, name="certificate_detail"),
     path("<int:certificate_id>/print/", views.certificate_print_view, name="certificate_print"),
 
-    # 🔥 تنزيل PDF (ReportLab)
+    # تنزيل PDF
     path("<int:certificate_id>/download/", views.certificate_download_pdf_view, name="certificate_download"),
 
     # -----------------------------
