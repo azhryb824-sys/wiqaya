@@ -14,6 +14,9 @@ from django.utils import timezone
 from contracts.models import MaintenanceContract
 from .forms import VisitForm, VisitNoteForm
 from .models import Visit
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
 
 
 def build_qr_code_base64(data):
@@ -352,3 +355,28 @@ def visit_delete_view(request, visit_id):
         return redirect("contract_visits_log", contract_id=contract_id)
 
     return render(request, "visits/visit_confirm_delete.html", {"visit": visit})
+@login_required
+def visits_log_download_pdf_view(request, contract_id):
+    contract = get_object_or_404(
+        MaintenanceContract.objects.select_related("institution", "client", "executive"),
+        id=contract_id,
+    )
+    visits = contract.visits.all().select_related("technician")
+
+    html_string = render_to_string(
+        "visits/visits_log_print.html",
+        {
+            "contract": contract,
+            "visits": visits,
+        },
+        request=request,
+    )
+
+    pdf_file = HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri("/")
+    ).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="visits_log_{contract.contract_number}.pdf"'
+    return response
