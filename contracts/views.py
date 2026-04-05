@@ -16,10 +16,10 @@ from django.urls import reverse
 from django.utils import timezone
 from hijridate import Gregorian
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.enums import TA_RIGHT
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from core.models import User
 from .forms import MaintenanceContractForm, ContractClauseTemplateForm
@@ -68,7 +68,11 @@ def get_user_institution(user):
 def get_contract_for_user_or_404(user, contract_id):
     institution = get_user_institution(user)
 
-    qs = MaintenanceContract.objects.select_related("client", "institution", "executive")
+    qs = MaintenanceContract.objects.select_related(
+        "client",
+        "institution",
+        "executive",
+    )
 
     if is_client(user):
         return get_object_or_404(qs, id=contract_id, client=user)
@@ -87,13 +91,24 @@ def contract_list_view(request):
     institution = get_user_institution(request.user)
 
     if can_manage_contracts(request.user):
-        contracts = MaintenanceContract.objects.filter(institution=institution)
+        contracts = MaintenanceContract.objects.filter(
+            institution=institution
+        ).select_related("client", "institution", "executive")
     elif is_client(request.user):
-        contracts = MaintenanceContract.objects.filter(client=request.user)
+        contracts = MaintenanceContract.objects.filter(
+            client=request.user
+        ).select_related("client", "institution", "executive")
     else:
         return HttpResponseForbidden()
 
-    return render(request, "contracts/contract_list.html", {"contracts": contracts})
+    return render(
+        request,
+        "contracts/contract_list.html",
+        {
+            "contracts": contracts,
+            "user_type_label": "العقود",
+        },
+    )
 
 
 # -----------------------------
@@ -105,18 +120,41 @@ def contract_create_view(request):
         return HttpResponseForbidden()
 
     institution = get_user_institution(request.user)
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
+
     form = MaintenanceContractForm(request.POST or None, institution=institution)
 
-    if form.is_valid():
-        contract = form.save(commit=False)
-        contract.institution = institution
-        contract.executive = request.user
-        contract.save()
+    if request.method == "POST":
+        if form.is_valid():
+            contract = form.save(commit=False)
+            contract.institution = institution
+            contract.executive = request.user
+            contract.save()
 
-        messages.success(request, "تم إنشاء العقد")
-        return redirect("contracts_list")
+            selected_templates = form.cleaned_data.get("clause_templates") or []
+            for template in selected_templates:
+                MaintenanceContractClause.objects.create(
+                    contract=contract,
+                    title=template.title,
+                    content=template.content,
+                    order=template.order,
+                )
 
-    return render(request, "contracts/contract_form.html", {"form": form})
+            messages.success(request, "تم إنشاء العقد")
+            return redirect("contracts_list")
+
+        messages.error(request, "تعذر إنشاء العقد، راجع البيانات")
+
+    return render(
+        request,
+        "contracts/contract_form.html",
+        {
+            "form": form,
+            "user_type_label": "العقود",
+        },
+    )
 
 
 # -----------------------------
@@ -125,7 +163,14 @@ def contract_create_view(request):
 @login_required
 def contract_detail_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
-    return render(request, "contracts/contract_detail.html", {"contract": contract})
+    return render(
+        request,
+        "contracts/contract_detail.html",
+        {
+            "contract": contract,
+            "user_type_label": "العقود",
+        },
+    )
 
 
 # -----------------------------
@@ -139,6 +184,9 @@ def contract_edit_view(request, contract_id):
         return HttpResponseForbidden("غير مصرح لك")
 
     institution = get_user_institution(request.user)
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
 
     form = MaintenanceContractForm(
         request.POST or None,
@@ -153,6 +201,16 @@ def contract_edit_view(request, contract_id):
             updated_contract.executive = request.user
             updated_contract.save()
 
+            selected_templates = form.cleaned_data.get("clause_templates") or []
+            contract.clauses.all().delete()
+            for template in selected_templates:
+                MaintenanceContractClause.objects.create(
+                    contract=updated_contract,
+                    title=template.title,
+                    content=template.content,
+                    order=template.order,
+                )
+
             messages.success(request, "تم تعديل العقد بنجاح")
             return redirect("contract_detail", contract_id=contract.id)
 
@@ -165,6 +223,7 @@ def contract_edit_view(request, contract_id):
             "form": form,
             "contract": contract,
             "is_edit": True,
+            "user_type_label": "العقود",
         },
     )
 
@@ -230,7 +289,6 @@ def contract_download_pdf_view(request, contract_id):
     response["Content-Disposition"] = f'attachment; filename="contract_{contract.contract_number}.pdf"'
 
     doc = SimpleDocTemplate(response, pagesize=A4)
-
     styles = getSampleStyleSheet()
     style = styles["Normal"]
     style.alignment = TA_RIGHT
@@ -247,7 +305,6 @@ def contract_download_pdf_view(request, contract_id):
     elements.append(Paragraph(f"تاريخ النهاية: {contract.end_date}", style))
 
     elements.append(Spacer(1, 20))
-
     elements.append(Paragraph("بنود العقد:", style))
     elements.append(Spacer(1, 10))
 
@@ -257,7 +314,6 @@ def contract_download_pdf_view(request, contract_id):
         elements.append(Spacer(1, 10))
 
     doc.build(elements)
-
     return response
 
 
@@ -273,4 +329,74 @@ def contract_delete_view(request, contract_id):
         messages.success(request, "تم الحذف")
         return redirect("contracts_list")
 
-    return render(request, "contracts/contract_confirm_delete.html", {"contract": contract})
+    return render(
+        request,
+        "contracts/contract_confirm_delete.html",
+        {
+            "contract": contract,
+            "user_type_label": "العقود",
+        },
+    )
+
+
+# -----------------------------
+# قائمة قوالب البنود
+# -----------------------------
+@login_required
+def clause_template_list_view(request):
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
+
+    templates = ContractClauseTemplate.objects.filter(
+        institution=institution
+    ).order_by("order", "id")
+
+    return render(
+        request,
+        "contracts/clause_template_list.html",
+        {
+            "templates": templates,
+            "user_type_label": "العقود",
+        },
+    )
+
+
+# -----------------------------
+# إنشاء قالب بند
+# -----------------------------
+@login_required
+def clause_template_create_view(request):
+    if not can_manage_contracts(request.user):
+        return HttpResponseForbidden("غير مصرح لك")
+
+    institution = get_user_institution(request.user)
+    if not institution:
+        messages.error(request, "يجب إنشاء مؤسسة أولاً")
+        return redirect("create_institution")
+
+    form = ContractClauseTemplateForm(request.POST or None)
+
+    if request.method == "POST":
+        if form.is_valid():
+            clause_template = form.save(commit=False)
+            clause_template.institution = institution
+            clause_template.save()
+
+            messages.success(request, "تم إضافة قالب البند بنجاح")
+            return redirect("clause_template_list")
+
+        messages.error(request, "تعذر حفظ البند، راجع الأخطاء")
+
+    return render(
+        request,
+        "contracts/clause_template_form.html",
+        {
+            "form": form,
+            "user_type_label": "العقود",
+        },
+    )
