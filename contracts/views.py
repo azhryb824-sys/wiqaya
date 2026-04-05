@@ -41,6 +41,9 @@ ARABIC_HIJRI_MONTHS = {
     11: "ذو القعدة",
     12: "ذو الحجة",
 }
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
 
 
 def format_hijri(date_obj):
@@ -729,3 +732,27 @@ def contract_delete_view(request, contract_id):
             "user_type_label": "العقود",
         },
     )
+    @login_required
+def contract_download_pdf_view(request, contract_id):
+    contract = get_object_or_404(
+        MaintenanceContract.objects.select_related("institution", "client", "executive"),
+        id=contract_id,
+    )
+
+    # ضع هنا نفس منطق الصلاحيات المستخدم في صفحة التفاصيل/الطباعة
+    html_string = render_to_string(
+        "contracts/contract_print.html",
+        {
+            "contract": contract,
+        },
+        request=request,
+    )
+
+    pdf_file = HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri("/")
+    ).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="contract_{contract.contract_number}.pdf"'
+    return response
