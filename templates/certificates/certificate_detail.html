@@ -6,10 +6,12 @@
 
 {% block dashboard_content %}
 <div class="d-flex justify-content-end mb-3 gap-2 flex-wrap">
-    <a href="{% url 'certificate_print' certificate.id %}" target="_blank" class="btn btn-main">
-        <i class="bi bi-printer"></i>
-        طباعة الشهادة
-    </a>
+    <a href="{% url 'certificate_print' certificate.id %}" class="btn btn-outline-secondary">
+    طباعة الشهادة
+</a>
+<a href="{% url 'certificate_download' certificate.id %}" class="btn btn-danger">
+    تنزيل الشهادة PDF
+</a>
 
     {% if certificate.contract %}
     <a href="{% url 'contract_detail' certificate.contract.id %}" class="btn btn-outline-dark">
