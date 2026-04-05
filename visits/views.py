@@ -16,7 +16,7 @@ from .forms import VisitForm, VisitNoteForm
 from .models import Visit
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
+
 
 
 def build_qr_code_base64(data):
