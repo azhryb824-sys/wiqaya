@@ -21,4 +21,5 @@ urlpatterns = [
 
     path("contract/<int:contract_id>/log/", views.contract_visits_log_view, name="contract_visits_log"),
     path("contract/<int:contract_id>/log/print/", views.contract_visits_log_print_view, name="contract_visits_log_print"),
+    path("contract/<int:contract_id>/log/download/", views.visits_log_download_pdf_view, name="visits_log_download"),
 ]
