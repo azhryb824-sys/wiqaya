@@ -18,4 +18,5 @@ urlpatterns = [
 
     path("clauses/", views.clause_template_list_view, name="clause_template_list"),
     path("clauses/create/", views.clause_template_create_view, name="clause_template_create"),
+    path("<int:contract_id>/download/", views.contract_download_pdf_view, name="contract_download"),
 ]
