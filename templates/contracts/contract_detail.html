@@ -6,50 +6,54 @@
 
 {% block dashboard_content %}
 <div class="d-flex gap-2 justify-content-end mb-3 flex-wrap">
-    <a href="{% url 'contract_print' contract.id %}" target="_blank" class="btn btn-main">
+
+    <a href="{% url 'contracts:contract_print' contract.id %}" target="_blank" class="btn btn-main">
         <i class="bi bi-printer"></i>
         طباعة العقد
     </a>
-    <a href="{% url 'contract_download' contract.id %}" class="btn btn-danger">
-    تنزيل العقد PDF
-</a>
+
+    <a href="{% url 'contracts:contract_download' contract.id %}" class="btn btn-danger">
+        تنزيل العقد PDF
+    </a>
 
     {% if request.user.user_type == "executive" or request.user.user_type == "admin_assistant" %}
-        <a href="{% url 'contract_edit' contract.id %}" class="btn btn-outline-main">
+
+        <a href="{% url 'contracts:contract_edit' contract.id %}" class="btn btn-outline-main">
             <i class="bi bi-pencil"></i>
             تعديل العقد
         </a>
 
-        <a href="{% url 'certificate_create_from_contract' contract.id %}" class="btn btn-outline-main">
+        <!-- ⚠️ شهادات -->
+        <a href="{% url 'certificates:certificate_create_from_contract' contract.id %}" class="btn btn-outline-main">
             <i class="bi bi-patch-check"></i>
             إنشاء شهادة إنهاء أعمال
         </a>
 
-        <a href="{% url 'contract_visits_log' contract.id %}" class="btn btn-outline-dark">
+        <!-- ⚠️ زيارات -->
+        <a href="{% url 'visits:contract_visits_log' contract.id %}" class="btn btn-outline-dark">
             <i class="bi bi-journal-text"></i>
             سجل الزيارات
         </a>
 
-        <a href="{% url 'contract_delete' contract.id %}" class="btn btn-outline-danger">
+        <a href="{% url 'contracts:contract_delete' contract.id %}" class="btn btn-outline-danger">
             <i class="bi bi-trash"></i>
             حذف العقد
         </a>
-    {% elif request.user.user_type == "client" %}
-        <a href="{% url 'contract_visits_log' contract.id %}" class="btn btn-outline-dark">
+
+    {% elif request.user.user_type == "client" or request.user.user_type == "technician" %}
+
+        <a href="{% url 'visits:contract_visits_log' contract.id %}" class="btn btn-outline-dark">
             <i class="bi bi-journal-text"></i>
             سجل الزيارات
         </a>
-    {% elif request.user.user_type == "technician" %}
-        <a href="{% url 'contract_visits_log' contract.id %}" class="btn btn-outline-dark">
-            <i class="bi bi-journal-text"></i>
-            سجل الزيارات
-        </a>
+
     {% endif %}
 </div>
 
 <div class="panel-card mb-4">
     <div class="panel-card-body">
         <div class="row g-4">
+
             <div class="col-md-6">
                 <strong>رقم العقد:</strong>
                 <div>{{ contract.contract_number }}</div>
@@ -138,6 +142,7 @@
                 </div>
             </div>
             {% endif %}
+
         </div>
     </div>
 </div>
@@ -148,45 +153,29 @@
         <h4>قرار العميل على العقد</h4>
     </div>
     <div class="panel-card-body">
+
         {% if contract.client_status == "approved" %}
             <div class="alert alert-success mb-0">
                 تم اعتماد هذا العقد من قبلك.
             </div>
         {% else %}
-            <form method="post" action="{% url 'contract_client_decision' contract.id %}">
+
+            <form method="post" action="{% url 'contracts:contract_client_decision' contract.id %}">
                 {% csrf_token %}
 
                 <div class="mb-3">
-                    <label for="client_response_note" class="form-label">ملاحظة العميل / سبب الرفض / التعديل المطلوب</label>
-                    <textarea
-                        name="client_response_note"
-                        id="client_response_note"
-                        rows="4"
-                        class="form-control"
-                        placeholder="اكتب ملاحظتك هنا إذا أردت رفض العقد أو طلب تعديله"
-                    >{{ contract.client_response_note|default:"" }}</textarea>
-                    <div class="form-text">
-                        عند الرفض أو طلب التعديل يجب كتابة السبب أو التعديل المطلوب.
-                    </div>
+                    <label class="form-label">ملاحظة العميل</label>
+                    <textarea name="client_response_note" rows="4" class="form-control">{{ contract.client_response_note|default:"" }}</textarea>
                 </div>
 
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="submit" name="decision" value="approved" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i>
-                        موافقة
-                    </button>
-
-                    <button type="submit" name="decision" value="rejected" class="btn btn-danger">
-                        <i class="bi bi-x-circle"></i>
-                        رفض
-                    </button>
-
-                    <button type="submit" name="decision" value="revision_requested" class="btn btn-warning">
-                        <i class="bi bi-pencil-square"></i>
-                        طلب تعديل
-                    </button>
+                <div class="d-flex gap-2">
+                    <button type="submit" name="decision" value="approved" class="btn btn-success">موافقة</button>
+                    <button type="submit" name="decision" value="rejected" class="btn btn-danger">رفض</button>
+                    <button type="submit" name="decision" value="revision_requested" class="btn btn-warning">طلب تعديل</button>
                 </div>
+
             </form>
+
         {% endif %}
     </div>
 </div>
@@ -200,11 +189,12 @@
         {% for clause in contract.clauses.all %}
             <div class="mb-4">
                 <h5>{{ forloop.counter }}. {{ clause.title }}</h5>
-                <p class="mb-0">{{ clause.content|linebreaksbr }}</p>
+                <p>{{ clause.content|linebreaksbr }}</p>
             </div>
         {% empty %}
-            <p class="mb-0">لا توجد بنود مضافة لهذا العقد.</p>
+            <p>لا توجد بنود</p>
         {% endfor %}
     </div>
 </div>
+
 {% endblock %}
