@@ -43,7 +43,8 @@
                         <strong>{{ contract.contract_number }}</strong><br>
                         {{ contract.second_party_name }}
                     </div>
-                    <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
+                    <!-- ✅ -->
+                    <a href="{% url 'contracts:contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
                         عرض
                     </a>
                 </li>
@@ -70,7 +71,8 @@
                         <strong>{{ contract.contract_number }}</strong><br>
                         {{ contract.building_name }}
                     </div>
-                    <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
+                    <!-- ✅ -->
+                    <a href="{% url 'contracts:contract_detail' contract.id %}" class="btn btn-sm btn-outline-main">
                         فتح
                     </a>
                 </li>
@@ -97,7 +99,8 @@
                         <strong>{{ visit.contract.contract_number }}</strong><br>
                         {{ visit.visit_date }}
                     </div>
-                    <a href="{% url 'visit_detail' visit.id %}" class="btn btn-sm btn-outline-main">
+                    <!-- ✅ -->
+                    <a href="{% url 'visits:visit_detail' visit.id %}" class="btn btn-sm btn-outline-main">
                         عرض
                     </a>
                 </li>
@@ -138,22 +141,26 @@
             </div>
             <div class="panel-card-body quick-actions">
 
-                <a href="{% url 'contracts_list' %}" class="quick-action-btn">
+                <!-- ✅ -->
+                <a href="{% url 'contracts:contracts_list' %}" class="quick-action-btn">
                     <i class="bi bi-plus-circle"></i>
                     <span>إنشاء عقد</span>
                 </a>
 
-                <a href="{% url 'visit_list' %}" class="quick-action-btn">
+                <!-- ✅ -->
+                <a href="{% url 'visits:visit_list' %}" class="quick-action-btn">
                     <i class="bi bi-calendar-plus"></i>
                     <span>إضافة زيارة</span>
                 </a>
 
-                <a href="{% url 'certificate_list' %}" class="quick-action-btn">
+                <!-- ✅ -->
+                <a href="{% url 'certificates:certificate_list' %}" class="quick-action-btn">
                     <i class="bi bi-patch-check"></i>
                     <span>إصدار شهادة</span>
                 </a>
 
-                <a href="{% url 'quotation_list' %}" class="quick-action-btn">
+                <!-- ⚠️ إذا quotations عندك فيه app_name -->
+                <a href="{% url 'quotations:quotation_list' %}" class="quick-action-btn">
                     <i class="bi bi-receipt"></i>
                     <span>عرض سعر</span>
                 </a>
