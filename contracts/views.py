@@ -15,7 +15,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from hijridate import Gregorian
-from weasyprint import HTML
+
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.enums import TA_RIGHT
 
 from core.models import User
 from .forms import MaintenanceContractForm, ContractClauseTemplateForm
@@ -44,40 +48,6 @@ def format_hijri(date_obj):
     hijri = Gregorian(date_obj.year, date_obj.month, date_obj.day).to_hijri()
     month_name = ARABIC_HIJRI_MONTHS.get(hijri.month, str(hijri.month))
     return f"{hijri.day} {month_name} {hijri.year}هـ"
-
-
-def build_qr_code_base64(data):
-    if not data:
-        return ""
-
-    qr = qrcode.QRCode(version=1, box_size=6, border=2)
-    qr.add_data(data)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return f"data:image/png;base64,{encoded}"
-
-
-def send_html_email(subject, to_emails, html_template, text_template=None, context=None):
-    context = context or {}
-
-    if not to_emails:
-        return
-
-    html_body = render_to_string(html_template, context)
-    text_body = render_to_string(text_template, context) if text_template else "رسالة من منصة وقاية"
-
-    msg = EmailMultiAlternatives(
-        subject=subject,
-        body=text_body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=to_emails,
-    )
-    msg.attach_alternative(html_body, "text/html")
-    msg.send()
 
 
 # -----------------------------
@@ -176,29 +146,43 @@ def contract_print_view(request, contract_id):
 
 
 # -----------------------------
-# تحميل PDF (نفس الطباعة)
+# تحميل PDF (ReportLab)
 # -----------------------------
 @login_required
 def contract_download_pdf_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
 
-    context = {
-        "contract": contract,
-        "created_at_hijri": format_hijri(contract.created_at.date()),
-        "start_date_hijri": format_hijri(contract.start_date),
-        "end_date_hijri": format_hijri(contract.end_date),
-    }
-
-    html_string = render_to_string("contracts/contract_print.html", context)
-
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="contract_{contract.contract_number}.pdf"'
 
-    try:
-        HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf(response)
-    except Exception:
-        messages.error(request, "خطأ في إنشاء PDF")
-        return redirect("contract_detail", contract_id=contract.id)
+    doc = SimpleDocTemplate(response, pagesize=A4)
+
+    styles = getSampleStyleSheet()
+    style = styles["Normal"]
+    style.alignment = TA_RIGHT
+
+    elements = []
+
+    elements.append(Paragraph("عقد صيانة", style))
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph(f"رقم العقد: {contract.contract_number}", style))
+    elements.append(Paragraph(f"اسم المبنى: {contract.building_name}", style))
+    elements.append(Paragraph(f"الموقع: {contract.building_location}", style))
+    elements.append(Paragraph(f"تاريخ البداية: {contract.start_date}", style))
+    elements.append(Paragraph(f"تاريخ النهاية: {contract.end_date}", style))
+
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph("بنود العقد:", style))
+    elements.append(Spacer(1, 10))
+
+    for clause in contract.clauses.all():
+        elements.append(Paragraph(f"- {clause.title}", style))
+        elements.append(Paragraph(clause.content, style))
+        elements.append(Spacer(1, 10))
+
+    doc.build(elements)
 
     return response
 
