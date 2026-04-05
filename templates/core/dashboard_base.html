@@ -62,31 +62,32 @@
                 <span>المستخدمون</span>
             </a>
 
-            <a href="{% url 'contracts_list' %}"
+            <!-- ✅ تم الإصلاح هنا -->
+            <a href="{% url 'contracts:contracts_list' %}"
                class="sidebar-link {% if '/contracts' in request.path %}active{% endif %}">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>العقود</span>
             </a>
 
-            <a href="{% url 'clause_template_list' %}"
+            <a href="{% url 'contracts:clause_template_list' %}"
                class="sidebar-link {% if '/clauses' in request.path %}active{% endif %}">
                 <i class="bi bi-card-list"></i>
                 <span>بنود العقود</span>
             </a>
 
-            <a href="{% url 'certificate_list' %}"
+            <a href="{% url 'certificates:certificate_list' %}"
                class="sidebar-link {% if '/certificates' in request.path %}active{% endif %}">
                 <i class="bi bi-patch-check"></i>
                 <span>الشهادات</span>
             </a>
 
-            <a href="{% url 'certificate_clause_list' %}"
-               class="sidebar-link {% if '/certificate-clauses' in request.path %}active{% endif %}">
+            <a href="{% url 'certificates:certificate_clause_list' %}"
+               class="sidebar-link {% if '/certificate' in request.path %}active{% endif %}">
                 <i class="bi bi-card-checklist"></i>
                 <span>بنود الشهادات</span>
             </a>
 
-            <a href="{% url 'visit_list' %}"
+            <a href="{% url 'visits:visit_list' %}"
                class="sidebar-link {% if '/visits' in request.path %}active{% endif %}">
                 <i class="bi bi-calendar2-check"></i>
                 <span>الزيارات</span>
@@ -109,7 +110,6 @@
     <!-- ================= Main ================= -->
     <main class="dashboard-main">
 
-        <!-- Topbar -->
         <div class="dashboard-topbar d-flex justify-content-between align-items-center">
 
             <div>
@@ -122,16 +122,15 @@
                 </p>
             </div>
 
-            <!-- زر سريع -->
+            <!-- ✅ زر تم إصلاحه -->
             <div>
-                <a href="{% url 'contracts_list' %}" class="btn btn-main">
+                <a href="{% url 'contracts:contract_create' %}" class="btn btn-main">
                     <i class="bi bi-plus-circle"></i> عقد جديد
                 </a>
             </div>
 
         </div>
 
-        <!-- الرسائل -->
         {% if messages %}
         <div class="mb-4">
             {% for message in messages %}
@@ -142,7 +141,6 @@
         </div>
         {% endif %}
 
-        <!-- المحتوى -->
         {% block dashboard_content %}{% endblock %}
 
     </main>
