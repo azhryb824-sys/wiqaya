@@ -23,13 +23,11 @@
             تعديل العقد
         </a>
 
-        <!-- ⚠️ شهادات -->
         <a href="{% url 'certificates:certificate_create_from_contract' contract.id %}" class="btn btn-outline-main">
             <i class="bi bi-patch-check"></i>
             إنشاء شهادة إنهاء أعمال
         </a>
 
-        <!-- ⚠️ زيارات -->
         <a href="{% url 'visits:contract_visits_log' contract.id %}" class="btn btn-outline-dark">
             <i class="bi bi-journal-text"></i>
             سجل الزيارات
