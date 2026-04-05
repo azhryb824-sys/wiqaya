@@ -10,6 +10,9 @@ from .models import (
     CompletionCertificate,
     CompletionCertificateClause,
 )
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
 
 
 ARABIC_HIJRI_MONTHS = {
@@ -276,3 +279,24 @@ def certificate_clause_template_create_view(request):
             "user_type_label": "الشهادات",
         },
     )
+    @login_required
+def certificate_download_pdf_view(request, certificate_id):
+    certificate = get_object_or_404(
+        CompletionCertificate.objects.select_related(
+            "contract",
+            "institution",
+            "executive",
+            "client",
+        ),
+        id=certificate_id,
+    )
+
+    if not _can_access_certificate(request.user, certificate):
+        messages.error(request, "غير مصرح لك بالدخول لهذه الصفحة")
+        return redirect("dashboard")
+
+    context = {
+        "certificate": certificate,
+        "issue_date_hijri": format_hijri(certificate.issue_date),
+        "expiry_date_hijri": format_hijri(certificate.expiry_date) if certificate.expiry_date else "-",
+    }
