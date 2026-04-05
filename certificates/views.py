@@ -1,7 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from hijridate import Gregorian
+
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from contracts.models import MaintenanceContract
 from .forms import CompletionCertificateForm, CertificateClauseTemplateForm
@@ -10,9 +16,6 @@ from .models import (
     CompletionCertificate,
     CompletionCertificateClause,
 )
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from weasyprint import HTML
 
 
 ARABIC_HIJRI_MONTHS = {
@@ -125,7 +128,6 @@ def certificate_create_view(request, contract_id=None):
             if not certificate.building_location:
                 certificate.building_location = selected_contract.building_location
 
-            # اسحب تاريخ الانتهاء دائماً من العقد
             certificate.expiry_date = selected_contract.end_date
 
             certificate.save()
@@ -224,6 +226,81 @@ def certificate_print_view(request, certificate_id):
 
 
 @login_required
+def certificate_download_pdf_view(request, certificate_id):
+    certificate = get_object_or_404(
+        CompletionCertificate.objects.select_related(
+            "contract",
+            "institution",
+            "executive",
+            "client",
+        ),
+        id=certificate_id,
+    )
+
+    if not _can_access_certificate(request.user, certificate):
+        messages.error(request, "غير مصرح لك بالدخول لهذه الصفحة")
+        return redirect("dashboard")
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="certificate_{certificate.certificate_number}.pdf"'
+    )
+
+    doc = SimpleDocTemplate(response, pagesize=A4)
+    styles = getSampleStyleSheet()
+    style = styles["Normal"]
+    style.alignment = TA_RIGHT
+
+    elements = []
+
+    elements.append(Paragraph("شهادة إنهاء أعمال", style))
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph(f"رقم الشهادة: {certificate.certificate_number}", style))
+    elements.append(Paragraph(f"رقم العقد: {certificate.contract.contract_number if certificate.contract else '-'}", style))
+    elements.append(Paragraph(f"اسم المستفيد: {certificate.beneficiary_name or '-'}", style))
+    elements.append(Paragraph(f"اسم المالك: {certificate.owner_name or '-'}", style))
+    elements.append(Paragraph(f"اسم المبنى: {certificate.building_name or '-'}", style))
+    elements.append(Paragraph(f"النشاط: {certificate.activity or '-'}", style))
+    elements.append(Paragraph(f"العنوان: {certificate.building_location or '-'}", style))
+    elements.append(Paragraph(f"تاريخ الإصدار: {format_hijri(certificate.issue_date)}", style))
+    elements.append(Paragraph(
+        f"تاريخ الانتهاء: {format_hijri(certificate.expiry_date) if certificate.expiry_date else '-'}",
+        style
+    ))
+
+    elements.append(Spacer(1, 18))
+    elements.append(Paragraph("بنود الشهادة:", style))
+    elements.append(Spacer(1, 10))
+
+    for clause in certificate.clauses.all():
+        clause_type = dict(CompletionCertificateClause.CLAUSE_TYPES).get(
+            clause.clause_type, clause.clause_type
+        )
+        work_type = dict(CompletionCertificateClause.WORK_TYPES).get(
+            clause.work_type, clause.work_type
+        )
+
+        elements.append(Paragraph(f"- البند: {clause.title}", style))
+        elements.append(Paragraph(f"النوع: {clause_type}", style))
+        elements.append(Paragraph(f"نوع العمل: {work_type}", style))
+
+        if clause.details:
+            elements.append(Paragraph(f"التفاصيل: {clause.details}", style))
+
+        if clause.contract_expiry_date:
+            elements.append(Paragraph(
+                f"تاريخ انتهاء العقد: {format_hijri(clause.contract_expiry_date)}",
+                style
+            ))
+
+        elements.append(Spacer(1, 10))
+
+    doc.build(elements)
+    return response
+
+
+@login_required
 def certificate_clause_template_list_view(request):
     if request.user.user_type not in ["executive", "admin_assistant"]:
         messages.error(request, "غير مصرح لك بالدخول لهذه الصفحة")
@@ -279,24 +356,3 @@ def certificate_clause_template_create_view(request):
             "user_type_label": "الشهادات",
         },
     )
-    @login_required
-def certificate_download_pdf_view(request, certificate_id):
-    certificate = get_object_or_404(
-        CompletionCertificate.objects.select_related(
-            "contract",
-            "institution",
-            "executive",
-            "client",
-        ),
-        id=certificate_id,
-    )
-
-    if not _can_access_certificate(request.user, certificate):
-        messages.error(request, "غير مصرح لك بالدخول لهذه الصفحة")
-        return redirect("dashboard")
-
-    context = {
-        "certificate": certificate,
-        "issue_date_hijri": format_hijri(certificate.issue_date),
-        "expiry_date_hijri": format_hijri(certificate.expiry_date) if certificate.expiry_date else "-",
-    }
