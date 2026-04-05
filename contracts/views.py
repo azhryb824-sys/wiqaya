@@ -170,6 +170,39 @@ def contract_edit_view(request, contract_id):
 
 
 # -----------------------------
+# قرار العميل
+# -----------------------------
+@login_required
+def contract_client_decision_view(request, contract_id):
+    contract = get_contract_for_user_or_404(request.user, contract_id)
+
+    if request.user.user_type != "client":
+        return HttpResponseForbidden("غير مصرح لك")
+
+    if request.method != "POST":
+        return redirect("contract_detail", contract_id=contract.id)
+
+    decision = request.POST.get("decision")
+
+    if decision == "approve":
+        if hasattr(contract, "status"):
+            contract.status = "approved"
+            contract.save()
+        messages.success(request, "تمت الموافقة على العقد")
+
+    elif decision == "reject":
+        if hasattr(contract, "status"):
+            contract.status = "rejected"
+            contract.save()
+        messages.success(request, "تم رفض العقد")
+
+    else:
+        messages.error(request, "قرار غير صالح")
+
+    return redirect("contract_detail", contract_id=contract.id)
+
+
+# -----------------------------
 # طباعة
 # -----------------------------
 @login_required
