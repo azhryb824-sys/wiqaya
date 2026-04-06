@@ -14,13 +14,12 @@
         <strong>المبنى:</strong> {{ contract.building_name }}
     </div>
 
-    
-    <a href="{% url 'visits_log_print' contract.id %}" class="btn btn-outline-secondary">
-    طباعة سجل الزيارات
-</a>
-<a href="{% url 'visits_log_download' contract.id %}" class="btn btn-danger">
-    تنزيل سجل الزيارات PDF
-</a>
+    <a href="{% url 'visits:contract_visits_log_print' contract.id %}" class="btn btn-outline-secondary">
+        طباعة سجل الزيارات
+    </a>
+    <a href="{% url 'visits:visits_log_download' contract.id %}" class="btn btn-danger">
+        تنزيل سجل الزيارات PDF
+    </a>
 </div>
 
 {% if contract.building_location %}
@@ -92,7 +91,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'visit_detail' visit.id %}" class="btn btn-sm btn-outline-dark">
+                            <a href="{% url 'visits:visit_detail' visit.id %}" class="btn btn-sm btn-outline-dark">
                                 عرض
                             </a>
                         </td>
