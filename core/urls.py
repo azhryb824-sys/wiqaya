@@ -63,6 +63,7 @@ urlpatterns = [
     path("users/", views.users_list_view, name="users_list"),
     path("users/create/", views.create_user_view, name="create_user"),
     path("users/delete/<int:user_id>/", views.delete_user_view, name="delete_user"),
+    path("users/<int:user_id>/", views.user_detail_view, name="user_detail"),
 
     # =========================
     # العقود
