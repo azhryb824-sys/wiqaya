@@ -32,6 +32,11 @@ def terms_view(request):
     return render(request, "core/terms.html")
 
 
+# ✅ تمت الإضافة هنا
+def subscriptions_view(request):
+    return render(request, "core/subscriptions.html")
+
+
 # =========================
 # تحويل التاريخ الهجري
 # =========================
