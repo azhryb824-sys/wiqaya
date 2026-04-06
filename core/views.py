@@ -215,6 +215,19 @@ def users_list_view(request):
 
 
 @login_required
+def user_detail_view(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+
+    return render(
+        request,
+        "core/user_detail.html",
+        {
+            "user_obj": user_obj,
+        },
+    )
+
+
+@login_required
 def create_user_view(request):
     form = CreateUserForm(request.POST or None)
 
