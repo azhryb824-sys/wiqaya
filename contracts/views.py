@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -84,6 +85,93 @@ def get_contract_for_user_or_404(user, contract_id):
 
 
 # -----------------------------
+# دوال مساعدة لربط العميل
+# -----------------------------
+def get_institution_clients(institution):
+    if not institution:
+        return User.objects.none()
+
+    if hasattr(institution, "users"):
+        return institution.users.filter(user_type="client")
+
+    return User.objects.filter(user_type="client")
+
+
+def get_client_full_name(client):
+    full_name = f"{getattr(client, 'first_name', '')} {getattr(client, 'last_name', '')}".strip()
+    return full_name or getattr(client, "username", "") or ""
+
+
+def get_client_second_party_name(client):
+    business_name = (
+        getattr(client, "business_name", None)
+        or getattr(client, "company_name", None)
+        or getattr(client, "establishment_name", None)
+        or getattr(client, "client_business_name", None)
+    )
+    return business_name or get_client_full_name(client)
+
+
+def find_client_by_identifier(institution, identifier):
+    identifier = (identifier or "").strip()
+    if not identifier:
+        return None
+
+    clients = get_institution_clients(institution)
+
+    query = (
+        Q(national_id=identifier)
+        | Q(phone=identifier)
+        | Q(email=identifier)
+        | Q(username=identifier)
+    )
+
+    # لو عندك حقول إضافية في User مثل الرقم الموحد أو اسم المنشأة
+    # سيحاول البحث فيها فقط إذا كانت موجودة في الموديل
+    optional_fields = [
+        "business_unified_number",
+        "unified_number",
+        "commercial_registration",
+    ]
+
+    model_field_names = {field.name for field in User._meta.get_fields() if hasattr(field, "name")}
+    for field_name in optional_fields:
+        if field_name in model_field_names:
+            query |= Q(**{field_name: identifier})
+
+    return clients.filter(query).first()
+
+
+def apply_client_linking_to_contract(contract, cleaned_data, institution):
+    selected_client = cleaned_data.get("client")
+    client_identifier = (cleaned_data.get("client_identifier") or "").strip()
+    second_party_name = (cleaned_data.get("second_party_name") or "").strip()
+
+    client = selected_client
+
+    if not client and client_identifier:
+        client = find_client_by_identifier(institution, client_identifier)
+
+    if client:
+        contract.client = client
+
+        if not client_identifier:
+            contract.client_identifier = getattr(client, "national_id", "") or ""
+        else:
+            contract.client_identifier = client_identifier
+
+        if not second_party_name:
+            contract.second_party_name = get_client_second_party_name(client)
+    else:
+        contract.client = None
+        contract.client_identifier = client_identifier
+        if second_party_name:
+            contract.second_party_name = second_party_name
+
+    return client
+
+
+# -----------------------------
 # عرض العقود
 # -----------------------------
 @login_required
@@ -131,21 +219,34 @@ def contract_create_view(request):
             contract = form.save(commit=False)
             contract.institution = institution
             contract.executive = request.user
-            contract.save()
 
-            selected_templates = form.cleaned_data.get("clause_templates") or []
-            for template in selected_templates:
-                MaintenanceContractClause.objects.create(
-                    contract=contract,
-                    title=template.title,
-                    content=template.content,
-                    order=template.order,
-                )
+            linked_client = apply_client_linking_to_contract(
+                contract=contract,
+                cleaned_data=form.cleaned_data,
+                institution=institution,
+            )
 
-            messages.success(request, "تم إنشاء العقد")
-            return redirect("contracts:contracts_list")
+            # لو أدخل المعرّف ولم يتم العثور على العميل
+            if not linked_client and (form.cleaned_data.get("client_identifier") or "").strip():
+                form.add_error("client_identifier", "لم يتم العثور على عميل مطابق لهذا المعرّف داخل المؤسسة.")
+                messages.error(request, "تعذر إنشاء العقد، راجع البيانات")
+            else:
+                contract.save()
 
-        messages.error(request, "تعذر إنشاء العقد، راجع البيانات")
+                selected_templates = form.cleaned_data.get("clause_templates") or []
+                for template in selected_templates:
+                    MaintenanceContractClause.objects.create(
+                        contract=contract,
+                        title=template.title,
+                        content=template.content,
+                        order=template.order,
+                    )
+
+                messages.success(request, "تم إنشاء العقد")
+                return redirect("contracts:contracts_list")
+
+        else:
+            messages.error(request, "تعذر إنشاء العقد، راجع البيانات")
 
     return render(
         request,
@@ -199,22 +300,34 @@ def contract_edit_view(request, contract_id):
             updated_contract = form.save(commit=False)
             updated_contract.institution = institution
             updated_contract.executive = request.user
-            updated_contract.save()
 
-            selected_templates = form.cleaned_data.get("clause_templates") or []
-            contract.clauses.all().delete()
-            for template in selected_templates:
-                MaintenanceContractClause.objects.create(
-                    contract=updated_contract,
-                    title=template.title,
-                    content=template.content,
-                    order=template.order,
-                )
+            linked_client = apply_client_linking_to_contract(
+                contract=updated_contract,
+                cleaned_data=form.cleaned_data,
+                institution=institution,
+            )
 
-            messages.success(request, "تم تعديل العقد بنجاح")
-            return redirect("contracts:contract_detail", contract_id=contract.id)
+            if not linked_client and (form.cleaned_data.get("client_identifier") or "").strip():
+                form.add_error("client_identifier", "لم يتم العثور على عميل مطابق لهذا المعرّف داخل المؤسسة.")
+                messages.error(request, "حدث خطأ أثناء التعديل، راجع البيانات")
+            else:
+                updated_contract.save()
 
-        messages.error(request, "حدث خطأ أثناء التعديل، راجع البيانات")
+                selected_templates = form.cleaned_data.get("clause_templates") or []
+                contract.clauses.all().delete()
+                for template in selected_templates:
+                    MaintenanceContractClause.objects.create(
+                        contract=updated_contract,
+                        title=template.title,
+                        content=template.content,
+                        order=template.order,
+                    )
+
+                messages.success(request, "تم تعديل العقد بنجاح")
+                return redirect("contracts:contract_detail", contract_id=contract.id)
+
+        else:
+            messages.error(request, "حدث خطأ أثناء التعديل، راجع البيانات")
 
     return render(
         request,
