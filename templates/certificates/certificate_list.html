@@ -31,7 +31,7 @@
                         <td>{{ certificate.owner_name }}</td>
                         <td>{{ certificate.building_name }}</td>
                         <td>
-                            <a href="{% url 'certificate_detail' certificate.id %}" class="btn btn-sm btn-outline-dark">عرض</a>
+                            <a href="{% url 'certificates:certificate_detail' certificate.id %}" class="btn btn-sm btn-outline-dark">عرض</a>
                         </td>
                     </tr>
                     {% empty %}
