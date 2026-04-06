@@ -44,18 +44,29 @@
                         <td>{{ quotation.issue_date }}</td>
                         <td>
                             <div class="actions-wrap">
-                                <a href="{% url 'quotation_detail' quotation.id %}" class="btn btn-sm btn-outline-primary">التفاصيل</a>
-                                <a href="{% url 'quotation_print' quotation.id %}" class="btn btn-sm btn-outline-dark">طباعة</a>
+
+                                <a href="{% url 'quotations:quotation_detail' quotation.id %}" class="btn btn-sm btn-outline-primary">
+                                    التفاصيل
+                                </a>
+
+                                <a href="{% url 'quotations:quotation_print' quotation.id %}" class="btn btn-sm btn-outline-dark">
+                                    طباعة
+                                </a>
 
                                 {% if request.user.user_type == "client" %}
                                     {% if quotation.status == "sent" or quotation.status == "draft" %}
-                                    <a href="{% url 'quotation_client_decision' quotation.id %}" class="btn btn-sm btn-outline-success">قبول / رفض</a>
+                                    <a href="{% url 'quotations:quotation_client_decision' quotation.id %}" class="btn btn-sm btn-outline-success">
+                                        قبول / رفض
+                                    </a>
                                     {% endif %}
 
                                     {% if quotation.status == "accepted" and not quotation.payment_method %}
-                                    <a href="{% url 'quotation_payment_choice' quotation.id %}" class="btn btn-sm btn-outline-warning">اختيار الدفع</a>
+                                    <a href="{% url 'quotations:quotation_payment_choice' quotation.id %}" class="btn btn-sm btn-outline-warning">
+                                        اختيار الدفع
+                                    </a>
                                     {% endif %}
                                 {% endif %}
+
                             </div>
                         </td>
                     </tr>
@@ -71,49 +82,4 @@
         {% endif %}
     </div>
 </div>
-
-<style>
-.quotations-table thead th {
-    white-space: nowrap;
-}
-
-.actions-wrap {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.status-draft {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-.status-sent {
-    background: #e0f2fe;
-    color: #075985;
-}
-
-.status-accepted {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.status-rejected {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-}
-</style>
 {% endblock %}
