@@ -143,7 +143,7 @@ def contract_create_view(request):
                 )
 
             messages.success(request, "تم إنشاء العقد")
-            return redirect("contracts_list")
+            return redirect("contracts:contracts_list")
 
         messages.error(request, "تعذر إنشاء العقد، راجع البيانات")
 
@@ -212,7 +212,7 @@ def contract_edit_view(request, contract_id):
                 )
 
             messages.success(request, "تم تعديل العقد بنجاح")
-            return redirect("contract_detail", contract_id=contract.id)
+            return redirect("contracts:contract_detail", contract_id=contract.id)
 
         messages.error(request, "حدث خطأ أثناء التعديل، راجع البيانات")
 
@@ -239,7 +239,7 @@ def contract_client_decision_view(request, contract_id):
         return HttpResponseForbidden("غير مصرح لك")
 
     if request.method != "POST":
-        return redirect("contract_detail", contract_id=contract.id)
+        return redirect("contracts:contract_detail", contract_id=contract.id)
 
     decision = request.POST.get("decision")
 
@@ -255,10 +255,16 @@ def contract_client_decision_view(request, contract_id):
             contract.save()
         messages.success(request, "تم رفض العقد")
 
+    elif decision == "revision_requested":
+        if hasattr(contract, "status"):
+            contract.status = "revision_requested"
+            contract.save()
+        messages.success(request, "تم إرسال طلب التعديل")
+
     else:
         messages.error(request, "قرار غير صالح")
 
-    return redirect("contract_detail", contract_id=contract.id)
+    return redirect("contracts:contract_detail", contract_id=contract.id)
 
 
 # -----------------------------
@@ -327,7 +333,7 @@ def contract_delete_view(request, contract_id):
     if request.method == "POST":
         contract.delete()
         messages.success(request, "تم الحذف")
-        return redirect("contracts_list")
+        return redirect("contracts:contracts_list")
 
     return render(
         request,
@@ -388,7 +394,7 @@ def clause_template_create_view(request):
             clause_template.save()
 
             messages.success(request, "تم إضافة قالب البند بنجاح")
-            return redirect("clause_template_list")
+            return redirect("contracts:clause_template_list")
 
         messages.error(request, "تعذر حفظ البند، راجع الأخطاء")
 
