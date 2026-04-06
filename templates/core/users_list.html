@@ -31,29 +31,21 @@
                         <td>{{ u.get_user_type_display }}</td>
                         <td>{{ u.phone|default:"-" }}</td>
                         <td>
-                            {% if u != request.user %}
-                            <td>
-    <div class="d-flex gap-1">
+                            <div class="d-flex gap-1 flex-wrap">
 
-        <!-- زر عرض -->
-        <a href="{% url 'user_detail' user.id %}" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-eye"></i>
-        </a>
+                                <a href="{% url 'user_detail' u.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
 
-        <!-- زر حذف -->
-        {% if request.user.id != user.id %}
-        <a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger">
-            <i class="bi bi-trash"></i>
-        </a>
-        {% else %}
-        <span class="text-muted small">الحساب الحالي</span>
-        {% endif %}
+                                {% if u != request.user %}
+                                <a href="{% url 'delete_user' u.id %}" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% else %}
+                                <span class="text-muted small align-self-center">الحساب الحالي</span>
+                                {% endif %}
 
-    </div>
-</td>
-                            {% else %}
-                            <span class="text-muted">الحساب الحالي</span>
-                            {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
