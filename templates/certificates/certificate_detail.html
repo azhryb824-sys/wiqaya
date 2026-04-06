@@ -6,15 +6,17 @@
 
 {% block dashboard_content %}
 <div class="d-flex justify-content-end mb-3 gap-2 flex-wrap">
-    <a href="{% url 'certificate_print' certificate.id %}" class="btn btn-outline-secondary">
-    طباعة الشهادة
-</a>
-<a href="{% url 'certificate_download' certificate.id %}" class="btn btn-danger">
-    تنزيل الشهادة PDF
-</a>
+
+    <a href="{% url 'certificates:certificate_print' certificate.id %}" class="btn btn-outline-secondary">
+        طباعة الشهادة
+    </a>
+
+    <a href="{% url 'certificates:certificate_download' certificate.id %}" class="btn btn-danger">
+        تنزيل الشهادة PDF
+    </a>
 
     {% if certificate.contract %}
-    <a href="{% url 'contract_detail' certificate.contract.id %}" class="btn btn-outline-dark">
+    <a href="{% url 'contracts:contract_detail' certificate.contract.id %}" class="btn btn-outline-dark">
         <i class="bi bi-file-earmark-text"></i>
         عرض العقد المرتبط
     </a>
@@ -70,7 +72,10 @@
                 <div>{{ certificate.building_name }}</div>
             </div>
 
-            <div class="col-md-6"><strong>النشاط:</strong><div>{{ certificate.activity|default:"-" }}</div></div>
+            <div class="col-md-6">
+                <strong>النشاط:</strong>
+                <div>{{ certificate.activity|default:"-" }}</div>
+            </div>
 
             <div class="col-md-6">
                 <strong>موقع المبنى:</strong>
@@ -106,18 +111,18 @@
     </div>
     <div class="panel-card-body">
         {% for clause in certificate.clauses.all %}
-<div class="mb-4">
-    <h5>{{ forloop.counter }}. {{ clause.title }}</h5>
-    <div>نوع البند: {{ clause.get_clause_type_display }}</div>
-    <div>نوع العمل: {{ clause.get_work_type_display }}</div>
-    <div>تاريخ انتهاء العقد: {{ clause.contract_expiry_date|default:"-" }}</div>
-    {% if clause.details %}
-    <div>التفاصيل: {{ clause.details }}</div>
-    {% endif %}
-</div>
-{% empty %}
-<p class="mb-0">لا توجد بنود مضافة لهذه الشهادة.</p>
-{% endfor %}
+        <div class="mb-4">
+            <h5>{{ forloop.counter }}. {{ clause.title }}</h5>
+            <div>نوع البند: {{ clause.get_clause_type_display }}</div>
+            <div>نوع العمل: {{ clause.get_work_type_display }}</div>
+            <div>تاريخ انتهاء العقد: {{ clause.contract_expiry_date|default:"-" }}</div>
+            {% if clause.details %}
+            <div>التفاصيل: {{ clause.details }}</div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="mb-0">لا توجد بنود مضافة لهذه الشهادة.</p>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
