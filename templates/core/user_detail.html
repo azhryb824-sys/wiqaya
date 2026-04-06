@@ -1,0 +1,104 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}تفاصيل المستخدم | منصة وقاية{% endblock %}
+{% block page_title %}تفاصيل المستخدم{% endblock %}
+{% block page_subtitle %}عرض كامل لبيانات المستخدم{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-card">
+    <div class="panel-card-body">
+
+        <div class="row g-4">
+
+            <!-- اسم المستخدم -->
+            <div class="col-md-6">
+                <strong>اسم المستخدم:</strong>
+                <div>{{ user_obj.username }}</div>
+            </div>
+
+            <!-- الاسم (Display Name) -->
+            <div class="col-md-6">
+                <strong>الاسم:</strong>
+                <div>{{ user_obj.get_display_name }}</div>
+            </div>
+
+            <!-- نوع المستخدم -->
+            <div class="col-md-6">
+                <strong>نوع المستخدم:</strong>
+                <div>{{ user_obj.get_user_type_display }}</div>
+            </div>
+
+            <!-- رقم الجوال -->
+            <div class="col-md-6">
+                <strong>رقم الجوال:</strong>
+                <div>{{ user_obj.phone|default:"-" }}</div>
+            </div>
+
+            <!-- الجوال بصيغة دولية -->
+            {% if user_obj.phone %}
+            <div class="col-md-6">
+                <strong>رقم الجوال (دولي):</strong>
+                <div>{{ user_obj.get_clean_phone }}</div>
+            </div>
+            {% endif %}
+
+            <!-- البريد الإلكتروني -->
+            <div class="col-md-6">
+                <strong>البريد الإلكتروني:</strong>
+                <div>{{ user_obj.email|default:"-" }}</div>
+            </div>
+
+            <!-- رقم الهوية -->
+            {% if user_obj.national_id %}
+            <div class="col-md-6">
+                <strong>رقم الهوية / السجل:</strong>
+                <div>{{ user_obj.national_id }}</div>
+            </div>
+            {% endif %}
+
+            <!-- اسم المنشأة -->
+            {% if user_obj.business_name %}
+            <div class="col-md-6">
+                <strong>اسم المنشأة:</strong>
+                <div>{{ user_obj.business_name }}</div>
+            </div>
+            {% endif %}
+
+            <!-- الرقم الموحد -->
+            {% if user_obj.business_unified_number %}
+            <div class="col-md-6">
+                <strong>الرقم الموحد للمنشأة:</strong>
+                <div>{{ user_obj.business_unified_number }}</div>
+            </div>
+            {% endif %}
+
+            <!-- المؤسسات المرتبطة -->
+            {% if user_obj.institutions.all %}
+            <div class="col-12">
+                <strong>المؤسسات المرتبطة:</strong>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                    {% for inst in user_obj.institutions.all %}
+                        <span class="badge text-bg-light border">
+                            {{ inst.name }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- أزرار -->
+        <div class="mt-4 d-flex gap-2">
+            <a href="{% url 'users_list' %}" class="btn btn-outline-secondary">
+                رجوع
+            </a>
+
+            <a href="{% url 'delete_user' user_obj.id %}" class="btn btn-danger">
+                حذف المستخدم
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
