@@ -202,7 +202,7 @@ def quotation_create_view(request):
                     installment.save()
 
             messages.success(request, "تم إنشاء عرض السعر بنجاح")
-            return redirect("quotation_detail", quotation_id=quotation.id)
+            return redirect("quotations:quotation_detail", quotation_id=quotation.id)
 
         if form.errors:
             for field_name, errors in form.errors.items():
@@ -331,14 +331,14 @@ def quotation_client_decision_view(request, quotation_id):
             quotation.client_decision_note = client_note
             quotation.save(update_fields=["status", "client_decision_note"])
             messages.success(request, "تم قبول عرض السعر بنجاح، اختر طريقة الدفع")
-            return redirect("quotation_payment_choice", quotation_id=quotation.id)
+            return redirect("quotations:quotation_payment_choice", quotation_id=quotation.id)
 
         if decision == "reject":
             quotation.status = "rejected"
             quotation.client_decision_note = client_note
             quotation.save(update_fields=["status", "client_decision_note"])
             messages.success(request, "تم رفض عرض السعر")
-            return redirect("quotation_detail", quotation_id=quotation.id)
+            return redirect("quotations:quotation_detail", quotation_id=quotation.id)
 
         messages.error(request, "الرجاء اختيار قرار صحيح")
 
@@ -373,7 +373,7 @@ def quotation_payment_choice_view(request, quotation_id):
 
     if quotation.status != "accepted":
         messages.error(request, "يجب قبول عرض السعر أولاً")
-        return redirect("quotation_detail", quotation_id=quotation.id)
+        return redirect("quotations:quotation_detail", quotation_id=quotation.id)
 
     if request.method == "POST":
         payment_method = request.POST.get("payment_method")
@@ -415,7 +415,7 @@ def quotation_payment_choice_view(request, quotation_id):
         quotation.save(update_fields=update_fields)
 
         messages.success(request, "تم حفظ طريقة الدفع بنجاح")
-        return redirect("quotation_detail", quotation_id=quotation.id)
+        return redirect("quotations:quotation_detail", quotation_id=quotation.id)
 
     return render(
         request,
