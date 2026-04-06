@@ -8,18 +8,20 @@
 <div class="panel-card mb-4">
     <div class="panel-card-body">
         <div class="top-actions mb-4">
-            <a href="{% url 'quotation_print' quotation.id %}" class="btn btn-main">
+
+            <!-- ✅ تم الإصلاح -->
+            <a href="{% url 'quotations:quotation_print' quotation.id %}" class="btn btn-main">
                 طباعة العرض
             </a>
 
             {% if request.user.user_type == "client" and quotation.status == "sent" or request.user.user_type == "client" and quotation.status == "draft" %}
-            <a href="{% url 'quotation_client_decision' quotation.id %}" class="btn btn-outline-success">
+            <a href="{% url 'quotations:quotation_client_decision' quotation.id %}" class="btn btn-outline-success">
                 قبول / رفض
             </a>
             {% endif %}
 
             {% if request.user.user_type == "client" and quotation.status == "accepted" and not quotation.payment_method %}
-            <a href="{% url 'quotation_payment_choice' quotation.id %}" class="btn btn-outline-warning">
+            <a href="{% url 'quotations:quotation_payment_choice' quotation.id %}" class="btn btn-outline-warning">
                 اختيار طريقة الدفع
             </a>
             {% endif %}
@@ -120,127 +122,3 @@
         </div>
     </div>
 </div>
-
-<div class="panel-card mb-4">
-    <div class="panel-card-body">
-        <h4 class="section-title">بنود عرض السعر</h4>
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-                <thead>
-                    <tr>
-                        <th>الإيضاحات</th>
-                        <th>الكمية</th>
-                        <th>السعر الفرادي</th>
-                        <th>السعر الإجمالي</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in quotation.items.all %}
-                    <tr>
-                        <td>{{ item.description }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>{{ item.unit_price }}</td>
-                        <td>{{ item.total_price }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center">لا توجد بنود</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="panel-card">
-    <div class="panel-card-body">
-        <h4 class="section-title">الدفعات</h4>
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-                <thead>
-                    <tr>
-                        <th>اسم الدفعة</th>
-                        <th>النسبة</th>
-                        <th>المبلغ</th>
-                        <th>موعد الدفع</th>
-                        <th>تم السداد</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for installment in quotation.installments.all %}
-                    <tr>
-                        <td>{{ installment.title }}</td>
-                        <td>{{ installment.percentage }}%</td>
-                        <td>{{ installment.amount|default:"-" }}</td>
-                        <td>{{ installment.due_description }}</td>
-                        <td>{% if installment.is_paid %}نعم{% else %}لا{% endif %}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">لا توجد دفعات محددة</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<style>
-.top-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-}
-
-.detail-item {
-    padding: 14px 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    background: #fff;
-    line-height: 1.8;
-}
-
-.detail-item.full {
-    grid-column: 1 / -1;
-}
-
-.receipt-card {
-    background: #fcfcff;
-    border-color: #d8def0;
-}
-
-.receipt-meta {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: #f5f7fb;
-    color: #4b5563;
-    font-size: 13px;
-}
-
-.section-title {
-    color: #7a0f1d;
-    font-weight: 800;
-    margin-bottom: 16px;
-}
-
-@media (max-width: 767px) {
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .detail-item.full {
-        grid-column: auto;
-    }
-}
-</style>
-{% endblock %}
