@@ -9,7 +9,7 @@
     <div class="panel-card-header d-flex justify-content-between align-items-center">
         <h4>قائمة الزيارات</h4>
         {% if request.user.user_type == "executive" or request.user.user_type == "admin_assistant" %}
-        <a href="{% url 'visit_create' %}" class="btn btn-main">إضافة زيارة</a>
+        <a href="{% url 'visits:visit_create' %}" class="btn btn-main">إضافة زيارة</a>
         {% endif %}
     </div>
 
