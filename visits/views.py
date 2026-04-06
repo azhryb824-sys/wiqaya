@@ -6,17 +6,20 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
 from contracts.models import MaintenanceContract
 from .forms import VisitForm, VisitNoteForm
 from .models import Visit
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-
 
 
 def build_qr_code_base64(data):
@@ -66,11 +69,11 @@ def send_technician_notification(request, technician, visit):
         return
 
     action_url = request.build_absolute_uri(
-        reverse("visit_detail", args=[visit.id])
+        reverse("visits:visit_detail", args=[visit.id])
     )
 
     context = {
-        "technician_name": technician.get_display_name(),
+        "technician_name": technician.get_display_name() if hasattr(technician, "get_display_name") else technician.get_full_name() or technician.username,
         "visit_date": visit.visit_date,
         "contract_number": visit.contract.contract_number,
         "building_name": visit.contract.building_name,
@@ -168,11 +171,15 @@ def visit_create_view(request):
 
             if contract.institution != institution:
                 messages.error(request, "العقد المحدد غير تابع لمؤسستك")
-                return redirect("visit_list")
+                return redirect("visits:visit_list")
 
             if contract.end_date < visit.visit_date:
                 messages.error(request, "لا يمكن إنشاء زيارة بعد انتهاء العقد")
-                return render(request, "visits/visit_form.html", {"form": form})
+                return render(
+                    request,
+                    "visits/visit_form.html",
+                    {"form": form, "user_type_label": "الزيارات"},
+                )
 
             duplicate_visit = Visit.objects.filter(
                 contract=contract,
@@ -182,7 +189,11 @@ def visit_create_view(request):
 
             if duplicate_visit:
                 messages.error(request, "توجد زيارة في نفس الشهر")
-                return render(request, "visits/visit_form.html", {"form": form})
+                return render(
+                    request,
+                    "visits/visit_form.html",
+                    {"form": form, "user_type_label": "الزيارات"},
+                )
 
             visit.save()
 
@@ -194,9 +205,16 @@ def visit_create_view(request):
                     messages.warning(request, "تم إنشاء الزيارة لكن تعذر إرسال إشعار الفني")
 
             messages.success(request, "تم إنشاء الزيارة")
-            return redirect("visit_list")
+            return redirect("visits:visit_list")
 
-    return render(request, "visits/visit_form.html", {"form": form})
+    return render(
+        request,
+        "visits/visit_form.html",
+        {
+            "form": form,
+            "user_type_label": "الزيارات",
+        },
+    )
 
 
 @login_required
@@ -205,9 +223,16 @@ def visit_detail_view(request, visit_id):
 
     if not _can_access_visit(request.user, visit):
         messages.error(request, "غير مصرح")
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
-    return render(request, "visits/visit_detail.html", {"visit": visit})
+    return render(
+        request,
+        "visits/visit_detail.html",
+        {
+            "visit": visit,
+            "user_type_label": "الزيارات",
+        },
+    )
 
 
 @login_required
@@ -215,7 +240,7 @@ def visit_print_view(request, visit_id):
     visit = get_object_or_404(Visit, id=visit_id)
 
     if not _can_access_visit(request.user, visit):
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
     return render(request, "visits/visit_print.html", {"visit": visit})
 
@@ -225,15 +250,24 @@ def visit_add_note_view(request, visit_id):
     visit = get_object_or_404(Visit, id=visit_id)
 
     if request.user.user_type != "technician":
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
     form = VisitNoteForm(request.POST or None, instance=visit)
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        return redirect("visit_detail", visit_id=visit.id)
+        messages.success(request, "تم حفظ الملاحظة")
+        return redirect("visits:visit_detail", visit_id=visit.id)
 
-    return render(request, "visits/monthly_note_form.html", {"form": form})
+    return render(
+        request,
+        "visits/monthly_note_form.html",
+        {
+            "form": form,
+            "visit": visit,
+            "user_type_label": "الزيارات",
+        },
+    )
 
 
 @login_required
@@ -241,13 +275,14 @@ def visit_technician_approve_view(request, visit_id):
     visit = get_object_or_404(Visit, id=visit_id)
 
     if request.user.user_type != "technician":
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
     visit.technician_approved = True
     visit.technician_approved_at = timezone.now()
     visit.save()
 
-    return redirect("visit_detail", visit_id=visit.id)
+    messages.success(request, "تم اعتماد الزيارة من الفني")
+    return redirect("visits:visit_detail", visit_id=visit.id)
 
 
 @login_required
@@ -255,36 +290,58 @@ def visit_client_approve_view(request, visit_id):
     visit = get_object_or_404(Visit, id=visit_id)
 
     if request.user.user_type != "client":
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
     visit.client_approved = True
     visit.client_approved_at = timezone.now()
     visit.save()
 
-    return redirect("visit_detail", visit_id=visit.id)
+    messages.success(request, "تم اعتماد الزيارة من العميل")
+    return redirect("visits:visit_detail", visit_id=visit.id)
 
 
 @login_required
 def contract_visits_log_view(request, contract_id):
     contract = get_object_or_404(MaintenanceContract, id=contract_id)
-    visits = contract.visits.all()
+
+    if not _can_access_contract(request.user, contract):
+        messages.error(request, "غير مصرح لك")
+        return redirect("dashboard")
+
+    visits = contract.visits.all().select_related("technician")
+    building_location_qr = build_qr_code_base64(contract.building_location)
 
     return render(
         request,
         "visits/contract_visits_log.html",
-        {"contract": contract, "visits": visits},
+        {
+            "contract": contract,
+            "visits": visits,
+            "building_location_qr": building_location_qr,
+            "user_type_label": "الزيارات",
+        },
     )
 
 
 @login_required
 def contract_visits_log_print_view(request, contract_id):
     contract = get_object_or_404(MaintenanceContract, id=contract_id)
-    visits = contract.visits.all()
+
+    if not _can_access_contract(request.user, contract):
+        messages.error(request, "غير مصرح لك")
+        return redirect("dashboard")
+
+    visits = contract.visits.all().select_related("technician")
+    building_location_qr = build_qr_code_base64(contract.building_location)
 
     return render(
         request,
         "visits/contract_visits_log_print.html",
-        {"contract": contract, "visits": visits},
+        {
+            "contract": contract,
+            "visits": visits,
+            "building_location_qr": building_location_qr,
+        },
     )
 
 
@@ -295,28 +352,34 @@ def visit_sign_technician_view(request, visit_id):
     if request.method == "POST":
         visit.technician_signature = request.POST.get("signature_data")
         visit.save()
-        return redirect("visit_detail", visit_id=visit.id)
+        messages.success(request, "تم حفظ التوقيع")
+        return redirect("visits:visit_detail", visit_id=visit.id)
 
-    return render(request, "visits/sign_visit.html", {"visit": visit})
+    return render(
+        request,
+        "visits/sign_visit.html",
+        {
+            "visit": visit,
+            "user_type_label": "الزيارات",
+        },
+    )
 
 
-# =========================
-# 🔥 التعديل
-# =========================
 @login_required
 def visit_edit_view(request, visit_id):
     visit = get_object_or_404(Visit, id=visit_id)
 
     if request.user.user_type != "executive":
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
     if visit.technician_approved or visit.client_approved:
         messages.error(request, "لا يمكن تعديل الزيارة بعد اعتمادها")
-        return redirect("visit_detail", visit_id=visit.id)
+        return redirect("visits:visit_detail", visit_id=visit.id)
 
     old_technician_id = visit.technician_id
+    institution = _get_user_institution(request.user)
 
-    form = VisitForm(request.POST or None, instance=visit)
+    form = VisitForm(request.POST or None, instance=visit, institution=institution)
 
     if request.method == "POST" and form.is_valid():
         visit = form.save()
@@ -329,54 +392,94 @@ def visit_edit_view(request, visit_id):
                 messages.warning(request, "تم تعديل الزيارة لكن تعذر إرسال إشعار الفني")
 
         messages.success(request, "تم التعديل")
-        return redirect("visit_detail", visit_id=visit.id)
+        return redirect("visits:visit_detail", visit_id=visit.id)
 
-    return render(request, "visits/visit_form.html", {"form": form, "is_edit": True})
+    return render(
+        request,
+        "visits/visit_form.html",
+        {
+            "form": form,
+            "is_edit": True,
+            "user_type_label": "الزيارات",
+        },
+    )
 
 
-# =========================
-# 🔥 الحذف
-# =========================
 @login_required
 def visit_delete_view(request, visit_id):
     visit = get_object_or_404(Visit, id=visit_id)
 
     if request.user.user_type != "executive":
-        return redirect("visit_list")
+        return redirect("visits:visit_list")
 
     if visit.technician_approved or visit.client_approved:
         messages.error(request, "لا يمكن حذف الزيارة بعد اعتمادها")
-        return redirect("visit_detail", visit_id=visit.id)
+        return redirect("visits:visit_detail", visit_id=visit.id)
 
     if request.method == "POST":
         contract_id = visit.contract.id
         visit.delete()
         messages.success(request, "تم الحذف")
-        return redirect("contract_visits_log", contract_id=contract_id)
+        return redirect("visits:contract_visits_log", contract_id=contract_id)
 
-    return render(request, "visits/visit_confirm_delete.html", {"visit": visit})
+    return render(
+        request,
+        "visits/visit_confirm_delete.html",
+        {
+            "visit": visit,
+            "user_type_label": "الزيارات",
+        },
+    )
+
+
 @login_required
 def visits_log_download_pdf_view(request, contract_id):
     contract = get_object_or_404(
         MaintenanceContract.objects.select_related("institution", "client", "executive"),
         id=contract_id,
     )
+
+    if not _can_access_contract(request.user, contract):
+        messages.error(request, "غير مصرح لك")
+        return redirect("dashboard")
+
     visits = contract.visits.all().select_related("technician")
 
-    html_string = render_to_string(
-        "visits/visits_log_print.html",
-        {
-            "contract": contract,
-            "visits": visits,
-        },
-        request=request,
-    )
-
-    pdf_file = HTML(
-        string=html_string,
-        base_url=request.build_absolute_uri("/")
-    ).write_pdf()
-
-    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="visits_log_{contract.contract_number}.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=A4)
+    styles = getSampleStyleSheet()
+    style = styles["Normal"]
+    style.alignment = TA_RIGHT
+
+    elements = []
+
+    elements.append(Paragraph("سجل الزيارات", style))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph(f"رقم العقد: {contract.contract_number}", style))
+    elements.append(Paragraph(f"الطرف الثاني: {contract.second_party_name}", style))
+    elements.append(Paragraph(f"اسم المبنى: {contract.building_name}", style))
+    if contract.building_location:
+        elements.append(Paragraph(f"موقع المبنى: {contract.building_location}", style))
+
+    elements.append(Spacer(1, 18))
+    elements.append(Paragraph("الزيارات:", style))
+    elements.append(Spacer(1, 10))
+
+    if visits.exists():
+        for visit in visits:
+            tech_name = str(visit.technician) if visit.technician else "-"
+            status = "مكتملة" if visit.technician_approved and visit.client_approved else "غير مكتملة"
+
+            elements.append(Paragraph(f"التاريخ: {visit.visit_date}", style))
+            elements.append(Paragraph(f"الشهر: {visit.month_label or '-'}", style))
+            elements.append(Paragraph(f"الفني: {tech_name}", style))
+            elements.append(Paragraph(f"ملاحظات الفني: {visit.notes or '-'}", style))
+            elements.append(Paragraph(f"الحالة: {status}", style))
+            elements.append(Spacer(1, 12))
+    else:
+        elements.append(Paragraph("لا توجد زيارات لهذا العقد.", style))
+
+    doc.build(elements)
     return response
