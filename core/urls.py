@@ -4,6 +4,7 @@ from . import views
 from .views import CustomLoginView
 
 urlpatterns = [
+    path("subscriptions/", subscriptions_view, name="subscriptions"),
     # =========================
     # النظام العام
     # =========================
