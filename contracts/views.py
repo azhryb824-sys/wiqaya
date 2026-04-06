@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -52,18 +52,53 @@ def format_hijri(date_obj):
 
 
 # -----------------------------
-# صلاحيات
+# صلاحيات ومساعدات أمنية
 # -----------------------------
 def is_client(user):
     return user.is_authenticated and user.user_type == "client"
+
 
 
 def can_manage_contracts(user):
     return user.is_authenticated and user.user_type in ["executive", "admin_assistant"]
 
 
+
 def get_user_institution(user):
     return user.institutions.first()
+
+
+
+def is_contract_deleted(contract):
+    return bool(getattr(contract, "is_deleted", False))
+
+
+
+def can_edit_contract(contract):
+    status = getattr(contract, "status", None)
+    if not status:
+        return True
+    return status in ["draft", "revision_requested", "pending"]
+
+
+
+def log_action(request, action, contract, note=""):
+    # مؤقتاً كسجل بسيط في اللوق إلى حين إضافة AuditLog Model
+    print(
+        "[AUDIT]",
+        f"user_id={getattr(request.user, 'id', None)}",
+        f"username={getattr(request.user, 'username', '')}",
+        f"action={action}",
+        f"contract_id={getattr(contract, 'id', None)}",
+        f"note={note}",
+    )
+
+
+
+def ensure_contract_not_deleted(contract):
+    if is_contract_deleted(contract):
+        raise Http404("هذا العقد غير متاح")
+
 
 
 def get_contract_for_user_or_404(user, contract_id):
@@ -76,12 +111,18 @@ def get_contract_for_user_or_404(user, contract_id):
     )
 
     if is_client(user):
-        return get_object_or_404(qs, id=contract_id, client=user)
+        contract = get_object_or_404(qs, id=contract_id, client=user)
+        ensure_contract_not_deleted(contract)
+        return contract
 
     if can_manage_contracts(user):
-        return get_object_or_404(qs, id=contract_id, institution=institution)
+        if not institution:
+            raise Http404("لا توجد مؤسسة مرتبطة بهذا المستخدم")
+        contract = get_object_or_404(qs, id=contract_id, institution=institution)
+        ensure_contract_not_deleted(contract)
+        return contract
 
-    raise HttpResponseForbidden("غير مصرح لك")
+    raise Http404("غير مصرح لك")
 
 
 # -----------------------------
@@ -97,9 +138,11 @@ def get_institution_clients(institution):
     return User.objects.filter(user_type="client")
 
 
+
 def get_client_full_name(client):
     full_name = f"{getattr(client, 'first_name', '')} {getattr(client, 'last_name', '')}".strip()
     return full_name or getattr(client, "username", "") or ""
+
 
 
 def get_client_second_party_name(client):
@@ -110,6 +153,7 @@ def get_client_second_party_name(client):
         or getattr(client, "client_business_name", None)
     )
     return business_name or get_client_full_name(client)
+
 
 
 def find_client_by_identifier(institution, identifier):
@@ -126,8 +170,6 @@ def find_client_by_identifier(institution, identifier):
         | Q(username=identifier)
     )
 
-    # لو عندك حقول إضافية في User مثل الرقم الموحد أو اسم المنشأة
-    # سيحاول البحث فيها فقط إذا كانت موجودة في الموديل
     optional_fields = [
         "business_unified_number",
         "unified_number",
@@ -140,6 +182,7 @@ def find_client_by_identifier(institution, identifier):
             query |= Q(**{field_name: identifier})
 
     return clients.filter(query).first()
+
 
 
 def apply_client_linking_to_contract(contract, cleaned_data, institution):
@@ -162,6 +205,8 @@ def apply_client_linking_to_contract(contract, cleaned_data, institution):
 
         if not second_party_name:
             contract.second_party_name = get_client_second_party_name(client)
+        else:
+            contract.second_party_name = second_party_name
     else:
         contract.client = None
         contract.client_identifier = client_identifier
@@ -179,6 +224,10 @@ def contract_list_view(request):
     institution = get_user_institution(request.user)
 
     if can_manage_contracts(request.user):
+        if not institution:
+            messages.error(request, "يجب إنشاء مؤسسة أولاً")
+            return redirect("create_institution")
+
         contracts = MaintenanceContract.objects.filter(
             institution=institution
         ).select_related("client", "institution", "executive")
@@ -188,6 +237,9 @@ def contract_list_view(request):
         ).select_related("client", "institution", "executive")
     else:
         return HttpResponseForbidden()
+
+    if hasattr(MaintenanceContract, "is_deleted"):
+        contracts = contracts.filter(is_deleted=False)
 
     return render(
         request,
@@ -226,7 +278,6 @@ def contract_create_view(request):
                 institution=institution,
             )
 
-            # لو أدخل المعرّف ولم يتم العثور على العميل
             if not linked_client and (form.cleaned_data.get("client_identifier") or "").strip():
                 form.add_error("client_identifier", "لم يتم العثور على عميل مطابق لهذا المعرّف داخل المؤسسة.")
                 messages.error(request, "تعذر إنشاء العقد، راجع البيانات")
@@ -242,6 +293,7 @@ def contract_create_view(request):
                         order=template.order,
                     )
 
+                log_action(request, "create_contract", contract)
                 messages.success(request, "تم إنشاء العقد")
                 return redirect("contracts:contracts_list")
 
@@ -284,6 +336,10 @@ def contract_edit_view(request, contract_id):
     if request.user.user_type not in ["executive", "admin_assistant"]:
         return HttpResponseForbidden("غير مصرح لك")
 
+    if not can_edit_contract(contract):
+        messages.error(request, "لا يمكن تعديل هذا العقد بعد اعتماده أو إغلاقه")
+        return redirect("contracts:contract_detail", contract_id=contract.id)
+
     institution = get_user_institution(request.user)
     if not institution:
         messages.error(request, "يجب إنشاء مؤسسة أولاً")
@@ -323,6 +379,7 @@ def contract_edit_view(request, contract_id):
                         order=template.order,
                     )
 
+                log_action(request, "update_contract", updated_contract)
                 messages.success(request, "تم تعديل العقد بنجاح")
                 return redirect("contracts:contract_detail", contract_id=contract.id)
 
@@ -354,24 +411,32 @@ def contract_client_decision_view(request, contract_id):
     if request.method != "POST":
         return redirect("contracts:contract_detail", contract_id=contract.id)
 
+    current_status = getattr(contract, "status", None)
+    if current_status in ["approved", "cancelled", "expired"]:
+        messages.error(request, "لا يمكن اتخاذ قرار جديد على هذا العقد")
+        return redirect("contracts:contract_detail", contract_id=contract.id)
+
     decision = request.POST.get("decision")
 
     if decision == "approve":
         if hasattr(contract, "status"):
             contract.status = "approved"
-            contract.save()
+            contract.save(update_fields=["status"])
+        log_action(request, "client_approve_contract", contract)
         messages.success(request, "تمت الموافقة على العقد")
 
     elif decision == "reject":
         if hasattr(contract, "status"):
             contract.status = "rejected"
-            contract.save()
+            contract.save(update_fields=["status"])
+        log_action(request, "client_reject_contract", contract)
         messages.success(request, "تم رفض العقد")
 
     elif decision == "revision_requested":
         if hasattr(contract, "status"):
             contract.status = "revision_requested"
-            contract.save()
+            contract.save(update_fields=["status"])
+        log_action(request, "client_request_revision_contract", contract)
         messages.success(request, "تم إرسال طلب التعديل")
 
     else:
@@ -432,6 +497,7 @@ def contract_download_pdf_view(request, contract_id):
         elements.append(Paragraph(clause.content, style))
         elements.append(Spacer(1, 10))
 
+    log_action(request, "download_contract_pdf", contract)
     doc.build(elements)
     return response
 
@@ -443,9 +509,33 @@ def contract_download_pdf_view(request, contract_id):
 def contract_delete_view(request, contract_id):
     contract = get_contract_for_user_or_404(request.user, contract_id)
 
+    if request.user.user_type != "executive":
+        return HttpResponseForbidden("فقط المدير التنفيذي يمكنه حذف العقد")
+
+    if getattr(contract, "status", None) == "approved":
+        messages.error(request, "لا يمكن حذف عقد تمت الموافقة عليه")
+        return redirect("contracts:contract_detail", contract_id=contract.id)
+
     if request.method == "POST":
-        contract.delete()
-        messages.success(request, "تم الحذف")
+        if hasattr(contract, "is_deleted"):
+            contract.is_deleted = True
+            if hasattr(contract, "deleted_at"):
+                contract.deleted_at = timezone.now()
+            if hasattr(contract, "deleted_by"):
+                contract.deleted_by = request.user
+
+            update_fields = ["is_deleted"]
+            if hasattr(contract, "deleted_at"):
+                update_fields.append("deleted_at")
+            if hasattr(contract, "deleted_by"):
+                update_fields.append("deleted_by")
+
+            contract.save(update_fields=update_fields)
+        else:
+            contract.delete()
+
+        log_action(request, "delete_contract", contract)
+        messages.success(request, "تم حذف العقد")
         return redirect("contracts:contracts_list")
 
     return render(
