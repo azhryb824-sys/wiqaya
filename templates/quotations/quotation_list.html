@@ -9,7 +9,7 @@
     <div class="panel-card-body">
         {% if request.user.user_type == "executive" or request.user.user_type == "admin_assistant" %}
         <div class="mb-4 text-start">
-            <a href="{% url 'quotation_create' %}" class="btn btn-main">إنشاء عرض سعر جديد</a>
+            <a href="{% url 'quotations:quotation_create' %}" class="btn btn-main">إنشاء عرض سعر جديد</a>
         </div>
         {% endif %}
 
