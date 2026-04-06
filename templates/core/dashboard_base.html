@@ -12,6 +12,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        .support-bar {
+            background: #0d6efd;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .support-bar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        .support-bar a:hover {
+            text-decoration: underline;
+        }
+
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #25D366;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            z-index: 9999;
+        }
+    </style>
 </head>
 
 <body class="dashboard-body">
@@ -38,68 +72,52 @@
 
         <nav class="sidebar-nav">
 
-            <a href="{% url 'dashboard' %}"
-               class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}">
+            <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.path == '/dashboard/' %}active{% endif %}">
                 <i class="bi bi-grid"></i>
                 <span>لوحة التحكم</span>
             </a>
 
-            <a href="{% url 'create_institution' %}"
-               class="sidebar-link {% if request.path == '/institution/create/' %}active{% endif %}">
+            <a href="{% url 'create_institution' %}" class="sidebar-link">
                 <i class="bi bi-building-add"></i>
                 <span>إنشاء مؤسسة</span>
             </a>
 
-            <a href="{% url 'edit_my_institution' %}"
-               class="sidebar-link {% if request.path == '/institution/edit/' %}active{% endif %}">
+            <a href="{% url 'edit_my_institution' %}" class="sidebar-link">
                 <i class="bi bi-building-gear"></i>
                 <span>تعديل المؤسسة</span>
             </a>
 
-            <a href="{% url 'users_list' %}"
-               class="sidebar-link {% if request.path == '/users/' %}active{% endif %}">
+            <a href="{% url 'users_list' %}" class="sidebar-link">
                 <i class="bi bi-people"></i>
                 <span>المستخدمون</span>
             </a>
 
-            <!-- العقود -->
-            <a href="{% url 'contracts:contracts_list' %}"
-               class="sidebar-link {% if '/contracts' in request.path %}active{% endif %}">
+            <a href="{% url 'contracts:contracts_list' %}" class="sidebar-link">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>العقود</span>
             </a>
 
-            <!-- بنود العقود -->
-            <a href="{% url 'contracts:clause_template_list' %}"
-               class="sidebar-link {% if '/clauses' in request.path %}active{% endif %}">
+            <a href="{% url 'contracts:clause_template_list' %}" class="sidebar-link">
                 <i class="bi bi-card-list"></i>
                 <span>بنود العقود</span>
             </a>
 
-            <!-- الشهادات -->
-            <a href="{% url 'certificates:certificate_list' %}"
-               class="sidebar-link {% if '/certificates' in request.path %}active{% endif %}">
+            <a href="{% url 'certificates:certificate_list' %}" class="sidebar-link">
                 <i class="bi bi-patch-check"></i>
                 <span>الشهادات</span>
             </a>
 
-            <!-- بنود الشهادات -->
-            <a href="{% url 'certificates:certificate_clause_list' %}"
-               class="sidebar-link {% if '/certificate' in request.path %}active{% endif %}">
+            <a href="{% url 'certificates:certificate_clause_list' %}" class="sidebar-link">
                 <i class="bi bi-card-checklist"></i>
                 <span>بنود الشهادات</span>
             </a>
 
-            <!-- الزيارات -->
-            <a href="{% url 'visits:visit_list' %}"
-               class="sidebar-link {% if '/visits' in request.path %}active{% endif %}">
+            <a href="{% url 'visits:visit_list' %}" class="sidebar-link">
                 <i class="bi bi-calendar2-check"></i>
                 <span>الزيارات</span>
             </a>
 
-            <!-- ✅ تم الإصلاح النهائي هنا -->
-            <a href="{% url 'quotations:quotation_list' %}"
-               class="sidebar-link {% if '/quotations' in request.path %}active{% endif %}">
+            <a href="{% url 'quotations:quotation_list' %}" class="sidebar-link">
                 <i class="bi bi-receipt"></i>
                 <span>عروض الأسعار</span>
             </a>
@@ -114,6 +132,15 @@
 
     <!-- ================= Main ================= -->
     <main class="dashboard-main">
+
+        <!-- ✅ دعم فني -->
+        <div class="support-bar d-flex justify-content-center align-items-center mb-3">
+            الدعم الفني:
+            <a href="tel:00966562376995">00966562376995</a> |
+            <a href="https://wa.me/966562376995" target="_blank">
+                <i class="bi bi-whatsapp"></i> واتساب
+            </a>
+        </div>
 
         <div class="dashboard-topbar d-flex justify-content-between align-items-center">
 
@@ -149,6 +176,11 @@
 
     </main>
 </div>
+
+<!-- زر واتساب عائم -->
+<a href="https://wa.me/966562376995" target="_blank" class="whatsapp-float">
+    💬 دعم
+</a>
 
 </body>
 </html>
