@@ -30,6 +30,21 @@
         .footer-divider {
             opacity: 0.5;
         }
+
+        .support-box {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .support-box a {
+            text-decoration: none;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        .support-box a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -83,14 +98,25 @@
 
 <footer class="main-footer">
     <div class="container text-center">
+
         <div class="footer-links mb-2">
             <a href="{% url 'terms' %}">اتفاقية الاستخدام</a>
             <span class="footer-divider">|</span>
-           
-            <span class="footer-divider">|</span>
             <a href="{% url 'subscription_terms' %}">شروط الاشتراك</a>
         </div>
-        <p class="mb-0">© جميع الحقوق محفوظة - منصة وقاية</p>
+
+        <!-- ✅ الدعم الفني -->
+        <div class="support-box">
+            <span>الدعم الفني:</span>
+            <a href="tel:00966562376995">00966562376995</a>
+            |
+            <a href="https://wa.me/966562376995" target="_blank">
+                <i class="bi bi-whatsapp"></i> واتساب
+            </a>
+        </div>
+
+        <p class="mb-0 mt-2">© جميع الحقوق محفوظة - منصة وقاية</p>
+
     </div>
 </footer>
 
