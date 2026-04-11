@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from . import views
 from .views import CustomLoginView
+from .views import home_view, terms_view, subscription_terms_view, subscriptions_view
 
 urlpatterns = [
     path("subscriptions/", subscriptions_view, name="subscriptions"),
