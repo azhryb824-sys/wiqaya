@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
 
-# 🔥 تعريف اسم التطبيق (مهم لمنع تعارض namespaces)
 app_name = "contracts"
 
 urlpatterns = [
@@ -17,7 +16,7 @@ urlpatterns = [
     path("<int:contract_id>/print/", views.contract_print_view, name="contract_print"),
 
     # تنزيل PDF
-    path("<int:contract_id>/download/", views.contract_download_pdf_view, name="contract_download"),
+    path("<int:contract_id>/download/", views.contract_download_pdf_view, name="contract_download_pdf"),
 
     # حذف
     path("<int:contract_id>/delete/", views.contract_delete_view, name="contract_delete"),
